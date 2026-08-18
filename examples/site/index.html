@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>a11y-shiken 検証用ダミーサイト</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+      color: #1f2430;
+      background: #f5f7fa;
+      line-height: 1.7;
+    }
+    :focus { outline: 3px solid #1d4ed8; outline-offset: 2px; }
+    main { max-width: 720px; margin: 0 auto; padding: 32px 24px 64px; }
+    h1 { font-size: 1.6rem; border-bottom: 3px solid #1d4ed8; padding-bottom: 8px; }
+    a { color: #1d4ed8; }
+    .versions { list-style: none; padding: 0; display: grid; gap: 16px; }
+    .versions li { background: #ffffff; border: 1px solid #d0d7e2; border-radius: 8px; padding: 20px; }
+    .versions h2 { margin-top: 0; font-size: 1.2rem; }
+    footer { max-width: 720px; margin: 0 auto; padding: 0 24px 32px; color: #595959; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>a11y-shiken 検証用ダミーサイト</h1>
+    <p>アクセシビリティ検査ツール <a href="https://github.com/taichiyam/a11y-shiken">a11y-shiken</a> の精度実測・ハンズオン用に作られた架空のウェブサイト「つばめ台コミュニティセンター」です。
+      同一レイアウトの2つのバージョンがあります。</p>
+    <ul class="versions">
+      <li>
+        <h2><a href="ok/">ok 版（適合バージョン）</a></h2>
+        <p>WCAG 2.2 Level A + AA に適合するよう実装したバージョン。検査すると「確認OK」が並ぶことを確認するデモに使います。</p>
+      </li>
+      <li>
+        <h2><a href="ng/">ng 版（違反バージョン）</a></h2>
+        <p>WCAG 2.2 Level A + AA の違反を意図的に仕込んだバージョン。どこに何を仕込んだかは <a href="ground-truth.md">ground-truth.md（違反設計表）</a>に記録しています。</p>
+      </li>
+    </ul>
+  </main>
+  <footer>
+    <p>このサイトに登場する施設・住所・電話番号はすべて架空のものです。</p>
+  </footer>
+</body>
+</html>

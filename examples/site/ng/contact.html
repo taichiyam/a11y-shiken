@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>ページ</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="site-header">
+    <div class="header-inner">
+      <p class="brand"><a href="./">つばめ台コミュニティセンター</a></p>
+      <form class="search-form" action="#" method="get">
+        <input type="search" name="q" placeholder="例: 会議室" aria-label="サイト内検索">
+        <button type="submit">
+          <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="18" height="18">
+            <circle cx="10" cy="10" r="6" fill="none" stroke="currentColor" stroke-width="2.5"/>
+            <line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2.5"/>
+          </svg>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="site-nav">
+    <ul>
+      <li><a href="contact.html" class="current">お問い合わせ</a></li>
+      <li><a href="./">トップ</a></li>
+      <li><a href="facility.html">ご案内</a></li>
+    </ul>
+  </div>
+
+  <div class="content">
+    <h1>お問い合わせ</h1>
+    <p>貸室の予約・施設の利用に関するご質問は、下のフォームからお送りください。
+      お急ぎの場合は電話（000-000-0000、受付時間 9時〜17時）でも受け付けています。</p>
+
+    <form class="contact-form" action="#" method="post">
+      <p>赤字の項目は必須です。</p>
+
+      <div class="field">
+        <label for="name" class="required">お名前</label>
+        <input type="text" id="name" name="name">
+      </div>
+
+      <div class="field">
+        <label for="email" class="required">メールアドレス</label>
+        <input type="email" id="email" name="email">
+      </div>
+
+      <div class="field">
+        <span class="field-title">電話番号</span>
+        <input type="tel" id="tel" name="tel">
+      </div>
+
+      <div class="field">
+        <label for="subject" class="required">お問い合わせの種類</label>
+        <select id="subject" name="subject">
+          <option value="">選択してください</option>
+          <option value="reservation">貸室の予約について</option>
+          <option value="event">講座・イベントについて</option>
+          <option value="tour">施設見学について</option>
+          <option value="other">その他</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="message" class="required">お問い合わせ内容</label>
+        <textarea id="message" name="message"></textarea>
+      </div>
+
+      <div class="agree">
+        <div class="fake-checkbox" id="agree"></div>
+        <span>個人情報の取り扱いに同意する</span>
+      </div>
+
+      <button type="submit" class="submit-button" aria-label="フォーム">送信する</button>
+    </form>
+  </div>
+
+  <div class="site-footer">
+    <div class="footer-inner">
+      <p>つばめ台コミュニティセンター<br>
+        〒000-0000 みどり県つばめ台市中央1-2-3<br>
+        電話: 000-000-0000（受付時間 9時〜17時）</p>
+      <p class="note">このサイトはアクセシビリティ検査の検証用に作られた架空のウェブサイトです。実在の施設・団体とは関係ありません。</p>
+    </div>
+  </div>
+</body>
+</html>
