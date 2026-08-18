@@ -205,6 +205,8 @@ cd <skill_dir> && bun scripts/a11y-visual-test.ts <URL>
 
 結果はJSON形式でstdoutに出力される（15チェック: target-size, label-in-name, non-text-contrast, heading-structure, aria-live, autoplay-media, char-key-shortcuts, motion-actuation, dragging-movements, input-purpose, error-identification, labels-or-instructions, error-suggestion, redundant-entry, accessible-authentication）。
 
+> **pass を出さないチェック**: non-text-contrast（境界線のみ検証）/ heading-structure（1.3.1 のうち見出し階層のみ検証）/ aria-live（属性の存在しか検証できない）は、検査範囲が達成基準の一部にとどまるため、問題未検出でも pass を出さず warning（要目視確認）を返す。また char-key-shortcuts / motion-actuation / dragging-movements は、CDP によるイベントリスナー検査に失敗した場合は pass を出さず warning を返す。
+
 > reflow, orientation, focus-visible, keyboard-trap, focus-order, text-resize, focus-not-obscured の7チェックはステップ2.7の Interactive テストに統合済み。
 
 **結果ラベル**: pass → 確認OK（自動判定(Visual)）、fail → 修正あり（自動判定(Visual)）、warning → 未確認(要確認)（要目視確認）
@@ -221,15 +223,15 @@ cd <skill_dir> && bun scripts/a11y-interactive-test.ts <URL>
 
 **検証項目（9チェック）:**
 
-1. **フォーカス可視化（2.4.7）**: フォーカス可能要素にTabキーで移動し、フォーカスリングが視認できるかスクリーンショットで確認
+1. **フォーカス可視化（2.4.7）**: フォーカス可能要素に順にフォーカスし、フォーカススタイル（outline / box-shadow）の有無を computed style で確認。スタイルの欠如（outline: none 等）は fail として検出するが、スタイルが存在しても実際の視認性（コントラスト・太さ）は自動検証できないため pass は出さず warning（要目視確認）とする
 2. **フォーカス順序（2.4.3）**: Tab移動順序をトレースし、DOM順序と比較して論理的か判定
 3. **キーボードトラップ（2.1.2）**: 全フォーカス可能要素をTab/Shift+Tabで移動し、トラップ（無限ループ）がないか確認
-4. **フォーカス不明瞭化防止（2.4.11）**: fixed/sticky要素によってフォーカス要素が隠れないかスクリーンショットで確認
+4. **フォーカス不明瞭化防止（2.4.11）**: fixed/sticky要素によってフォーカス要素が隠れないかスクリーンショットで確認。fixed/sticky要素が存在しない場合のみ pass、存在する場合は全スクロール位置を検証できないため隠れ未検出でも warning とする
 5. **リフロー（1.4.10）**: ビューポートを320x256pxに変更し、横スクロールバーが発生しないか確認
 6. **表示の向き（1.3.4）**: portrait/landscape両方でスクリーンショットを取得し、レイアウト崩れがないか確認
 7. **テキストサイズ変更（1.4.4）**: 200%ズームでスクリーンショットを取得し、テキストの切れや重なりがないか確認
-8. **フォーカス時の挙動（3.2.1）**: フォーカス前後でURL/DOMを比較し、予期しないページ遷移やコンテンツ変化がないか確認
-9. **入力時の挙動（3.2.2）**: テキスト入力時にURL/DOMを比較し、自動送信などの予期しない変化がないか確認
+8. **フォーカス時の挙動（3.2.1）**: フォーカス前後でURLとDOMスナップショット（innerHTMLハッシュ + 可視要素数）を比較。ページ遷移は fail、DOM変化は warning、両方の変化なしを確認できた場合のみ pass
+9. **入力時の挙動（3.2.2）**: テキスト入力の前後でURLとDOMスナップショットを比較。ページ遷移（自動送信等）は fail、DOM変化は warning、両方の変化なしを確認できた場合のみ pass
 
 結果はJSON形式でstdoutに出力される。スクリーンショットは `{OUTPUT_DIR}/data/{ラベル}/screenshots/` に保存する（`--screenshot-dir {OUTPUT_DIR}/data/{ラベル}/screenshots` を指定）。
 

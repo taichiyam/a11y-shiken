@@ -214,19 +214,17 @@ async function checkNonTextContrast(page: Page): Promise<CheckResult> {
     return problems;
   });
 
+  // 本チェックが検証しているのはフォーム部品の「境界線 vs 背景」のみ。
+  // 境界線のないコンポーネント・アイコン・状態表示等のグラフィックは検証できていないため、
+  // 問題が検出されなくても pass は出さず warning（未確認）に倒す。
   return {
     id: "non-text-contrast",
     criterion: "1.4.11",
     name: "非テキストコントラスト",
-    result:
-      issues.length === 0
-        ? "pass"
-        : issues.length <= 3
-          ? "warning"
-          : "fail",
+    result: issues.length > 3 ? "fail" : "warning",
     details:
       issues.length === 0
-        ? "UI コンポーネントの非テキストコントラストは 3:1 以上"
+        ? "フォーム部品の境界線と背景のコントラスト比に問題は検出されず。ただし本チェックは境界線のみの検証のため、境界線のないコンポーネント・アイコン・グラフィックは目視確認が必要"
         : `${issues.length}個の UI コンポーネントでコントラスト比が 3:1 未満`,
     elements: issues.slice(0, 20),
   };
@@ -267,19 +265,17 @@ async function checkHeadingStructure(page: Page): Promise<CheckResult> {
     return { headings: headings.length, problems };
   });
 
+  // 1.3.1（情報及び関係性）のうち本チェックが検証しているのは見出し階層のみ。
+  // テーブル・リスト・視覚的な関係性など他の構造は検証できていないため、
+  // 見出しに問題がなくても pass は出さず warning（未確認）に倒す。
   return {
     id: "heading-structure",
     criterion: "1.3.1",
     name: "見出し構造",
-    result:
-      issues.problems.length === 0
-        ? "pass"
-        : issues.problems.length <= 2
-          ? "warning"
-          : "fail",
+    result: issues.problems.length > 2 ? "fail" : "warning",
     details:
       issues.problems.length === 0
-        ? `見出し構造に問題なし（${issues.headings}個の見出し要素）`
+        ? `見出し階層に機械検出可能な問題なし（${issues.headings}個の見出し要素）。テーブル・リスト等、見出し以外の構造の適切さは目視確認が必要`
         : `${issues.problems.length}件の見出し構造の問題を検出（${issues.headings}個の見出し要素）`,
     elements: issues.problems.slice(0, 20),
   };
@@ -342,20 +338,17 @@ async function checkAriaLive(page: Page): Promise<CheckResult> {
 
   const allIssues = [...result.found, ...result.missingLive];
 
+  // aria-live 属性の存在検査だけでは「ステータスメッセージが支援技術に適切に伝わる」ことも
+  // 「動的コンテンツが存在しない」ことも検証できないため、pass は出さず常に warning（未確認）とする。
   return {
     id: "aria-live",
     criterion: "4.1.3",
     name: "ステータスメッセージ（aria-live）",
-    result:
-      result.missingLive.length > 0
-        ? "warning"
-        : result.found.length > 0
-          ? "pass"
-          : "pass",
+    result: "warning",
     details:
       result.found.length > 0
-        ? `${result.found.length}個のaria-live領域を検出${result.missingLive.length > 0 ? `、${result.missingLive.length}個の動的要素にaria-live未設定` : ""}`
-        : `aria-live領域なし（動的コンテンツがなければ問題なし）${result.missingLive.length > 0 ? `。${result.missingLive.length}個の動的要素にaria-live未設定の可能性` : ""}`,
+        ? `${result.found.length}個のaria-live領域を検出${result.missingLive.length > 0 ? `、${result.missingLive.length}個の動的要素にaria-live未設定` : ""}。ステータスメッセージが支援技術に適切に通知されるかは目視確認が必要`
+        : `aria-live領域なし${result.missingLive.length > 0 ? `。${result.missingLive.length}個の動的要素にaria-live未設定の可能性` : ""}。動的なステータスメッセージの有無は機械判定できないため目視確認が必要`,
     elements: allIssues.slice(0, 20),
   };
 }
@@ -418,50 +411,52 @@ async function checkCharKeyShortcuts(page: Page): Promise<CheckResult> {
     return problems;
   });
 
-  // CDPでdocumentレベルのkeydown/keypressイベントリスナーを検出
-  let docListeners: { selector: string; issue: string }[] = [];
+  // CDPでdocument/windowレベルのkeydown/keypressイベントリスナーを検出
+  let keyListenerIssues: { selector: string; issue: string }[] = [];
+  let cdpOk = false;
   try {
     const client = await (page as any).context().newCDPSession(page);
-    const { listeners } = await client.send("DOMDebugger.getEventListeners", {
-      objectId: (
-        await client.send("Runtime.evaluate", {
-          expression: "document",
-          objectGroup: "listeners",
-        })
-      ).result.objectId,
-    });
+    for (const target of ["document", "window"]) {
+      const { listeners } = await client.send("DOMDebugger.getEventListeners", {
+        objectId: (
+          await client.send("Runtime.evaluate", {
+            expression: target,
+            objectGroup: "listeners",
+          })
+        ).result.objectId,
+      });
 
-    const keyListeners = (listeners as any[]).filter((l: any) =>
-      ["keydown", "keypress", "keyup"].includes(l.type)
-    );
+      const keyListeners = (listeners as any[]).filter((l: any) =>
+        ["keydown", "keypress", "keyup"].includes(l.type)
+      );
 
-    if (keyListeners.length > 0) {
-      docListeners = keyListeners.map((l: any) => ({
-        selector: "document",
-        issue: `documentレベルの${l.type}リスナーを検出（文字キーショートカットの可能性）`,
-      }));
+      keyListenerIssues.push(
+        ...keyListeners.map((l: any) => ({
+          selector: target,
+          issue: `${target}レベルの${l.type}リスナーを検出（文字キーショートカットの可能性）`,
+        }))
+      );
     }
+    cdpOk = true;
 
     await client.detach();
   } catch {
-    // CDP接続に失敗した場合はスキップ
+    // CDP接続に失敗した場合、リスナーの有無は未確認（cdpOk = false のまま）
   }
 
-  const allIssues = [...issues, ...docListeners];
+  const allIssues = [...issues, ...keyListenerIssues];
 
   return {
     id: "char-key-shortcuts",
     criterion: "2.1.4",
     name: "文字キーのショートカット",
-    result:
-      allIssues.length === 0
-        ? "pass"
-        : issues.length > 0
-          ? "warning"
-          : "warning",
+    // キーリスナーを検査できなかった場合、「検出されず」は検証の裏付けがないため pass を出さない
+    result: allIssues.length === 0 ? (cdpOk ? "pass" : "warning") : "warning",
     details:
       allIssues.length === 0
-        ? "文字キーショートカットは検出されず"
+        ? cdpOk
+          ? "文字キーショートカットは検出されず"
+          : "accesskey属性は検出されず。キーイベントリスナーの検査に失敗したため（CDP接続不可）、文字キーショートカットの有無は目視確認が必要"
         : `${allIssues.length}件の文字キーショートカットの可能性を検出（無効化/再設定/フォーカス時のみ有効にする手段があるか要確認）`,
     elements: allIssues.slice(0, 20),
   };
@@ -470,6 +465,7 @@ async function checkCharKeyShortcuts(page: Page): Promise<CheckResult> {
 /** 2.5.4 動きによる起動: devicemotion/deviceorientation リスナーの検出 */
 async function checkMotionActuation(page: Page): Promise<CheckResult> {
   let motionListeners: { selector: string; issue: string }[] = [];
+  let cdpOk = false;
 
   try {
     const client = await (page as any).context().newCDPSession(page);
@@ -494,20 +490,24 @@ async function checkMotionActuation(page: Page): Promise<CheckResult> {
         issue: `${l.type}イベントリスナーを検出（動きによる起動の可能性。UIによる代替手段があるか要確認）`,
       }));
     }
+    cdpOk = true;
 
     await client.detach();
   } catch {
-    // CDP接続に失敗した場合はスキップ
+    // CDP接続に失敗した場合、リスナーの有無は未確認（cdpOk = false のまま）
   }
 
   return {
     id: "motion-actuation",
     criterion: "2.5.4",
     name: "動きによる起動",
-    result: motionListeners.length === 0 ? "pass" : "warning",
+    // リスナーを検査できなかった場合、「検出されず」は検証の裏付けがないため pass を出さない
+    result: motionListeners.length === 0 ? (cdpOk ? "pass" : "warning") : "warning",
     details:
       motionListeners.length === 0
-        ? "動きによる起動は検出されず"
+        ? cdpOk
+          ? "動きによる起動は検出されず"
+          : "モーションイベントリスナーの検査に失敗したため（CDP接続不可）、動きによる起動の有無は目視確認が必要"
         : `${motionListeners.length}件のモーションイベントリスナーを検出`,
     elements: motionListeners.slice(0, 20),
   };
@@ -539,6 +539,7 @@ async function checkDraggingMovements(page: Page): Promise<CheckResult> {
 
   // Check drag event listeners via CDP
   let dragListeners: { selector: string; issue: string }[] = [];
+  let cdpOk = false;
   try {
     const client = await (page as any).context().newCDPSession(page);
     const { listeners } = await client.send("DOMDebugger.getEventListeners", {
@@ -560,10 +561,11 @@ async function checkDraggingMovements(page: Page): Promise<CheckResult> {
         issue: `documentレベルの${l.type}リスナーを検出（ドラッグ操作の可能性）`,
       }));
     }
+    cdpOk = true;
 
     await client.detach();
   } catch {
-    // CDP接続に失敗した場合はスキップ
+    // CDP接続に失敗した場合、リスナーの有無は未確認（cdpOk = false のまま）
   }
 
   const allIssues = [...draggableElements, ...dragListeners];
@@ -572,10 +574,13 @@ async function checkDraggingMovements(page: Page): Promise<CheckResult> {
     id: "dragging-movements",
     criterion: "2.5.7",
     name: "ドラッグ操作",
-    result: allIssues.length === 0 ? "pass" : "warning",
+    // リスナーを検査できなかった場合、「検出されず」は検証の裏付けがないため pass を出さない
+    result: allIssues.length === 0 ? (cdpOk ? "pass" : "warning") : "warning",
     details:
       allIssues.length === 0
-        ? "ドラッグ操作は検出されず"
+        ? cdpOk
+          ? "ドラッグ操作は検出されず"
+          : "draggable属性は検出されず。dragイベントリスナーの検査に失敗したため（CDP接続不可）、ドラッグ操作の有無は目視確認が必要"
         : `${allIssues.length}件のドラッグ操作の可能性を検出（単一ポインタの代替手段があるか要確認）`,
     elements: allIssues.slice(0, 20),
   };

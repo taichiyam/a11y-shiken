@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import type { Page } from "playwright";
+import type { ElementHandle, Page } from "playwright";
 import { mkdir } from "fs/promises";
 import { join } from "path";
 import { launchStableBrowser, gotoStable } from "./lib/stable-browser";
@@ -90,6 +90,13 @@ async function testFocusVisible(page: Page, screenshotDir: string): Promise<Test
       (_, i) => Math.floor((i * focusableElements.length) / sampleSize)
     );
 
+    // キーボードモダリティを確立する。
+    // Chromium は直前の操作がキーボードのときだけ script focus にも :focus-visible を適用するため、
+    // 先に Tab を1回押しておかないと、UA デフォルトのフォーカスリングだけに頼る適合ページを
+    // 「インジケータなし」と誤判定（false fail）してしまう。
+    await page.keyboard.press("Tab");
+    await page.waitForTimeout(50);
+
     let visibleFocusCount = 0;
 
     for (const index of sampleIndices) {
@@ -101,12 +108,17 @@ async function testFocusVisible(page: Page, screenshotDir: string): Promise<Test
       await page.screenshot({ path: screenshotPath });
       screenshots.push(screenshotPath);
 
-      // フォーカススタイルの有無を確認（outline または box-shadow）
+      // フォーカススタイルの有無を確認（outline または box-shadow）。
+      // computed の outline ショートハンドは「rgb(...) none 0px」形式で返るため、
+      // 文字列全体を "none" と比較しても outline: none を検出できない。個別プロパティで判定する。
+      // outlineStyle "auto" は UA デフォルトのフォーカスリング（幅の計算値に依存しない）。
       const hasVisibleFocus = await element.evaluate((el) => {
         const styles = window.getComputedStyle(el);
-        const outline = styles.outline;
-        const boxShadow = styles.boxShadow;
-        return outline !== "none" || boxShadow !== "none";
+        const outlineVisible =
+          styles.outlineStyle !== "none" &&
+          (styles.outlineStyle === "auto" || parseFloat(styles.outlineWidth) > 0);
+        const boxShadowVisible = styles.boxShadow !== "none";
+        return outlineVisible || boxShadowVisible;
       });
 
       if (hasVisibleFocus) {
@@ -116,22 +128,15 @@ async function testFocusVisible(page: Page, screenshotDir: string): Promise<Test
 
     const passRate = visibleFocusCount / sampleSize;
 
-    if (passRate >= 1.0) {
-      return {
-        criterion: "2.4.7",
-        name: "フォーカス可視化",
-        status: "pass",
-        source: "自動判定(Interactive)",
-        details: `${sampleSize}個の操作要素でフォーカスリング確認。すべて視認可能。`,
-        screenshots,
-      };
-    } else if (passRate >= 0.5) {
+    if (passRate >= 0.5) {
+      // CSS 上にフォーカススタイルが存在しても、実際に視認できるか（コントラスト・太さ）までは
+      // 自動検証できていない。pass は出さず warning（未確認）に倒す。
       return {
         criterion: "2.4.7",
         name: "フォーカス可視化",
         status: "warning",
         source: "自動判定(Interactive)",
-        details: `${sampleSize}個中${visibleFocusCount}個でフォーカスが視認可能。一部要素で確認が必要です。`,
+        details: `${sampleSize}個中${visibleFocusCount}個の操作要素でフォーカススタイル（outline / box-shadow）を確認。実際の視認性（コントラスト・太さ）は自動検証できないため、スクリーンショットの目視確認が必要です。`,
         screenshots,
       };
     } else {
@@ -473,12 +478,15 @@ async function testFocusNotObscured(page: Page, screenshotDir: string): Promise<
     }
 
     if (obscuredCount === 0) {
+      // fixed/sticky 要素が存在する場合、隠れが起きるかはスクロール位置に依存する。
+      // scrollIntoViewIfNeeded 後の中心点サンプル確認だけでは全スクロール位置を検証できて
+      // いないため、pass は出さず warning（未確認）に倒す。
       return {
         criterion: "2.4.11",
         name: "フォーカス不明瞭化防止",
-        status: "pass",
+        status: "warning",
         source: "自動判定(Interactive)",
-        details: `${sampleSize}個の要素でフォーカスの不明瞭化は検出されませんでした。`,
+        details: `fixed/sticky 要素が存在します。サンプル${sampleSize}個の確認ではフォーカス要素の隠れは検出されませんでしたが、すべてのスクロール位置は検証できないため目視確認が必要です。`,
         screenshots,
       };
     } else {
@@ -683,6 +691,51 @@ async function testTextResize(page: Page, screenshotDir: string): Promise<TestRe
 }
 
 /**
+ * DOM スナップショット（3.2.1 / 3.2.2 の変化検出用）。
+ * body の innerHTML ハッシュと可視要素数を記録し、操作前後で比較する。
+ * - innerHTML ハッシュ: 要素の追加・削除・属性変更（class / style 切り替えによる表示変更を含む）を検出
+ * - 可視要素数: DOM 変更を伴わずに CSS だけで表示状態が変わるケースの補助検出
+ */
+interface DomSnapshot {
+  htmlHash: number;
+  visibleCount: number;
+}
+
+async function takeDomSnapshot(page: Page): Promise<DomSnapshot> {
+  return page.evaluate(() => {
+    const html = document.body ? document.body.innerHTML : "";
+    // djb2 xor 変種の単純ハッシュ（前後比較にのみ使用）
+    let hash = 5381;
+    for (let i = 0; i < html.length; i++) {
+      hash = ((hash * 33) ^ html.charCodeAt(i)) | 0;
+    }
+    let visibleCount = 0;
+    document.querySelectorAll("*").forEach((el) => {
+      if ((el as HTMLElement).offsetParent !== null) visibleCount++;
+    });
+    return { htmlHash: hash, visibleCount };
+  });
+}
+
+function snapshotChanged(before: DomSnapshot, after: DomSnapshot): boolean {
+  return before.htmlHash !== after.htmlHash || before.visibleCount !== after.visibleCount;
+}
+
+/** 要素の簡易セレクタ表記（結果レポートでの特定用） */
+async function describeElement(element: ElementHandle<SVGElement | HTMLElement>): Promise<string> {
+  return element
+    .evaluate((node) => {
+      const tag = node.tagName.toLowerCase();
+      const id = node.id ? `#${node.id}` : "";
+      const cls = node.className
+        ? `.${String(node.className).split(" ").filter(Boolean).slice(0, 2).join(".")}`
+        : "";
+      return `${tag}${id}${cls}`;
+    })
+    .catch(() => "(不明な要素)");
+}
+
+/**
  * 3.2.1 フォーカス時の挙動
  * フォーカス前後でURL/DOMを比較し、予期しないページ遷移やコンテンツ変化がないか確認
  */
@@ -700,8 +753,8 @@ async function testOnFocus(page: Page, screenshotDir: string): Promise<TestResul
       };
     }
 
-    const initialUrl = page.url();
-    let unexpectedChanges = 0;
+    let urlChanges = 0;
+    const domChangedSelectors: string[] = [];
 
     // サンプリング
     const sampleSize = Math.min(10, focusableElements.length);
@@ -713,6 +766,7 @@ async function testOnFocus(page: Page, screenshotDir: string): Promise<TestResul
     for (const index of sampleIndices) {
       const element = focusableElements[index];
       const urlBefore = page.url();
+      const domBefore = await takeDomSnapshot(page);
 
       await element.focus();
       await page.waitForTimeout(100);
@@ -720,17 +774,37 @@ async function testOnFocus(page: Page, screenshotDir: string): Promise<TestResul
       const urlAfter = page.url();
 
       if (urlBefore !== urlAfter) {
-        unexpectedChanges++;
+        // ページ遷移が起きた時点で fail 確定。遷移後の古い要素ハンドルに focus し続けると
+        // 例外で warning に化けてしまう（fail の取りこぼし）ため、ここで打ち切る。
+        urlChanges++;
+        break;
+      }
+
+      const domAfter = await takeDomSnapshot(page);
+      if (snapshotChanged(domBefore, domAfter)) {
+        domChangedSelectors.push(await describeElement(element));
       }
     }
 
-    if (unexpectedChanges > 0) {
+    if (urlChanges > 0) {
       return {
         criterion: "3.2.1",
         name: "フォーカス時の挙動",
         status: "fail",
         source: "自動判定(Interactive)",
-        details: `${sampleSize}個中${unexpectedChanges}個の要素でフォーカス時にページ遷移が発生しました。`,
+        details: `${sampleSize}個中${urlChanges}個の要素でフォーカス時にページ遷移が発生しました。`,
+      };
+    }
+
+    if (domChangedSelectors.length > 0) {
+      // DOM の変化 = コンテキストの変化とは限らない（装飾クラスの付与等もありうる）ため、
+      // fail ではなく warning（未確認）とし、目視確認に回す。
+      return {
+        criterion: "3.2.1",
+        name: "フォーカス時の挙動",
+        status: "warning",
+        source: "自動判定(Interactive)",
+        details: `${sampleSize}個中${domChangedSelectors.length}個の要素でフォーカス前後に DOM の変化を検出しました（${domChangedSelectors.join(", ")}）。ポップアップ表示などコンテキストの変化にあたらないか目視確認が必要です。`,
       };
     }
 
@@ -739,7 +813,7 @@ async function testOnFocus(page: Page, screenshotDir: string): Promise<TestResul
       name: "フォーカス時の挙動",
       status: "pass",
       source: "自動判定(Interactive)",
-      details: `${sampleSize}個の要素でフォーカス時の予期しない挙動は検出されませんでした。`,
+      details: `${sampleSize}個の要素でフォーカス前後の URL・DOM に変化がないことを確認しました。`,
     };
   } catch (error) {
     return {
@@ -789,8 +863,9 @@ async function testOnInput(page: Page, screenshotDir: string): Promise<TestResul
       };
     }
 
-    let unexpectedChanges = 0;
+    let urlChanges = 0;
     let testedCount = 0;
+    const domChangedSelectors: string[] = [];
 
     // サンプリング
     const sampleSize = Math.min(5, visibleElements.length);
@@ -806,13 +881,19 @@ async function testOnInput(page: Page, screenshotDir: string): Promise<TestResul
         const urlBefore = page.url();
 
         await element.focus();
+        const domBefore = await takeDomSnapshot(page);
         await element.fill("test", { timeout: 5000 }); // タイムアウトを短く設定
         await page.waitForTimeout(500); // 自動送信を待つ
 
         const urlAfter = page.url();
 
         if (urlBefore !== urlAfter) {
-          unexpectedChanges++;
+          urlChanges++;
+        } else {
+          const domAfter = await takeDomSnapshot(page);
+          if (snapshotChanged(domBefore, domAfter)) {
+            domChangedSelectors.push(await describeElement(element));
+          }
         }
         testedCount++;
       } catch (error) {
@@ -821,23 +902,36 @@ async function testOnInput(page: Page, screenshotDir: string): Promise<TestResul
       }
     }
 
-    if (testedCount === 0) {
-      return {
-        criterion: "3.2.2",
-        name: "入力時の挙動",
-        status: "warning",
-        source: "自動判定(Interactive)",
-        details: "入力フィールドのテストに失敗しました。目視確認が必要です。",
-      };
-    }
-
-    if (unexpectedChanges > 0) {
+    if (urlChanges > 0) {
       return {
         criterion: "3.2.2",
         name: "入力時の挙動",
         status: "fail",
         source: "自動判定(Interactive)",
-        details: `${sampleSize}個中${unexpectedChanges}個の入力フィールドで入力時にページ遷移が発生しました。`,
+        details: `${sampleSize}個中${urlChanges}個の入力フィールドで入力時にページ遷移が発生しました。`,
+      };
+    }
+
+    if (testedCount < sampleSize) {
+      // テストできなかったフィールドを「問題なし」と扱わない（間違った合格の防止）
+      return {
+        criterion: "3.2.2",
+        name: "入力時の挙動",
+        status: "warning",
+        source: "自動判定(Interactive)",
+        details: `${sampleSize}個中${testedCount}個の入力フィールドしかテストできませんでした。残りは目視確認が必要です。`,
+      };
+    }
+
+    if (domChangedSelectors.length > 0) {
+      // DOM の変化 = コンテキストの変化とは限らない（入力値のバリデーション表示等もありうる）ため、
+      // fail ではなく warning（未確認）とし、目視確認に回す。
+      return {
+        criterion: "3.2.2",
+        name: "入力時の挙動",
+        status: "warning",
+        source: "自動判定(Interactive)",
+        details: `${sampleSize}個中${domChangedSelectors.length}個の入力フィールドで入力前後に DOM の変化を検出しました（${domChangedSelectors.join(", ")}）。フォーム自動送信・フォーカス移動などコンテキストの変化にあたらないか目視確認が必要です。`,
       };
     }
 
@@ -846,7 +940,7 @@ async function testOnInput(page: Page, screenshotDir: string): Promise<TestResul
       name: "入力時の挙動",
       status: "pass",
       source: "自動判定(Interactive)",
-      details: `${sampleSize}個の入力フィールドで入力時の予期しない挙動は検出されませんでした。`,
+      details: `${sampleSize}個の入力フィールドで入力前後の URL・DOM に変化がないことを確認しました。`,
     };
   } catch (error) {
     return {
