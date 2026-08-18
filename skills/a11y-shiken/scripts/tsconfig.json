@@ -5,7 +5,7 @@
     "moduleResolution": "bundler",
     "noEmit": true,
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": ["node", "bun"]
   },
   "include": ["*.ts", "lib/*.ts"]
 }

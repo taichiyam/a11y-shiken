@@ -68,13 +68,13 @@ function parseArgs(): CliArgs {
 
 // --- axe-core JSON 型定義 ---
 
-interface AxeNode {
+export interface AxeNode {
   html: string;
   target: string[];
   failureSummary?: string;
 }
 
-interface AxeRule {
+export interface AxeRule {
   id: string;
   impact?: string;
   description: string;
@@ -84,7 +84,7 @@ interface AxeRule {
   nodes?: AxeNode[];
 }
 
-interface AxeResult {
+export interface AxeResult {
   url: string;
   timestamp: string;
   violations: AxeRule[];
@@ -94,7 +94,7 @@ interface AxeResult {
 
 // --- Visual テスト JSON 型定義 ---
 
-interface VisualCheckResult {
+export interface VisualCheckResult {
   id: string;
   criterion: string;
   name: string;
@@ -103,7 +103,7 @@ interface VisualCheckResult {
   elements: { selector: string; issue: string }[];
 }
 
-interface VisualTestOutput {
+export interface VisualTestOutput {
   url: string;
   timestamp: string;
   summary: { pass: number; fail: number; warning: number };
@@ -112,7 +112,7 @@ interface VisualTestOutput {
 
 // --- Interactive テスト JSON 型定義 ---
 
-interface InteractiveTestResult {
+export interface InteractiveTestResult {
   criterion: string;
   name: string;
   status: "pass" | "fail" | "warning";
@@ -121,7 +121,7 @@ interface InteractiveTestResult {
   screenshots?: string[];
 }
 
-interface InteractiveTestOutput {
+export interface InteractiveTestOutput {
   url: string;
   timestamp: string;
   results: InteractiveTestResult[];
@@ -129,14 +129,40 @@ interface InteractiveTestOutput {
 
 // --- Claude 分析オーバーライド JSON 型定義 ---
 
-interface ClaudeOverride {
+export interface ClaudeOverride {
   criterion: string;
   status: "pass" | "fail" | "warning" | "not-applicable";
   details: string;
+  // pass / fail / not-applicable の判定根拠（セレクタ・accessible name・属性値等）。
+  // 空・欠落の場合は sanitizeClaudeOverrides() が warning に強制降格する
+  evidence: string;
 }
 
-interface ClaudeOverridesResult {
+export interface ClaudeOverridesResult {
   overrides: ClaudeOverride[];
+}
+
+function hasEvidence(text: string | undefined): boolean {
+  return typeof text === "string" && text.trim() !== "";
+}
+
+// 証拠必須ガード: evidence が空・欠落の pass / fail / not-applicable を warning（未確認）に強制降格する。
+// not-applicable も「確認OK」として出力されるため、pass と同様に証拠を要求する
+export function sanitizeClaudeOverrides(raw: ClaudeOverridesResult): {
+  result: ClaudeOverridesResult;
+  demotions: string[];
+} {
+  const demotions: string[] = [];
+  const overrides = raw.overrides.map((o) => {
+    if (o.status === "warning" || hasEvidence(o.evidence)) return o;
+    demotions.push(`${o.criterion}: 証拠なしの ${o.status} 判定を warning に降格しました`);
+    return {
+      ...o,
+      status: "warning" as const,
+      details: `【証拠なしのため未確認に降格（元判定: ${o.status}）】${o.details ?? ""}`.trim(),
+    };
+  });
+  return { result: { overrides }, demotions };
 }
 
 // --- マニフェスト JSON 型定義 ---
@@ -169,7 +195,7 @@ interface UrlSummary {
 
 // --- WCAG 達成基準の定義 (references/wcag-checklist.md の順序) ---
 
-interface WcagCriterion {
+export interface WcagCriterion {
   id: string; // e.g. "1.1.1"
   name: string;
   category: string; // 原則
@@ -693,10 +719,12 @@ function getDisplayLabel(status: ResultStatus): string {
   }
 }
 
-interface CriterionResult {
+export interface CriterionResult {
   status: ResultStatus;
   source: string; // "自動判定", "自動判定(Visual)", "自動判定(Interactive)", "自動判定(Claude)", "要目視確認"
   notes: string;
+  // 前段の「不適合」を後段が「適合」で覆そうとした場合に立つ（上書きの成否を問わない）
+  conflict?: boolean;
 }
 
 function evaluateCriterion(
@@ -737,7 +765,53 @@ function evaluateCriterion(
 
 // --- 結果統合 ---
 
-function mergeResults(
+function joinNotes(a: string, b: string): string {
+  if (!a) return b;
+  if (!b) return a;
+  return `${a}; ${b}`;
+}
+
+// 遷移ルール: 「安全側への遷移は自由、危険側への遷移は制限」
+// - 適合 → 不適合、任意 → 未確認 は無条件で許可（従来どおり）
+// - 不適合 → 適合 の降格は、上書き元の判定に証拠がある場合のみ許可する。
+//   許可・却下のいずれでも矛盾フラグ（conflict）を立て、備考に経緯を残す
+function applyOverrideStatus(
+  current: CriterionResult,
+  proposed: { status: "適合" | "不適合"; source: string; notes: string; evidence?: string }
+): CriterionResult {
+  if (proposed.status === "不適合" || current.status !== "不適合") {
+    return {
+      status: proposed.status,
+      source: proposed.source,
+      // 既に矛盾が起きている場合は「⚠️ 判定矛盾」の経緯を備考から消さない
+      notes: current.conflict ? joinNotes(current.notes, proposed.notes) : proposed.notes,
+      conflict: current.conflict,
+    };
+  }
+
+  // 不適合 → 適合 の降格を試みている
+  if (hasEvidence(proposed.evidence)) {
+    return {
+      status: "適合",
+      source: proposed.source,
+      notes: joinNotes(
+        `⚠️ 判定矛盾: ${current.source}の不適合を${proposed.source}が適合で上書き`,
+        proposed.notes
+      ),
+      conflict: true,
+    };
+  }
+  return {
+    ...current,
+    notes: joinNotes(
+      current.notes,
+      `⚠️ 判定矛盾: ${proposed.source}は適合と判定したが、証拠がないため${current.source}の不適合を維持`
+    ),
+    conflict: true,
+  };
+}
+
+export function mergeResults(
   criterion: WcagCriterion,
   axeData: AxeResult,
   visualData?: VisualTestOutput,
@@ -753,18 +827,23 @@ function mergeResults(
       (o) => o.criterion === criterion.id
     );
     if (override && override.status !== "warning") {
-      result = {
+      const notes = joinNotes(
+        override.details || "",
+        hasEvidence(override.evidence) ? `証拠: ${override.evidence.trim()}` : ""
+      );
+      result = applyOverrideStatus(result, {
         status: (override.status === "pass" || override.status === "not-applicable") ? "適合" : "不適合",
         source: "自動判定(Claude)",
-        notes: override.details || result.notes,
-      };
+        notes: notes || result.notes,
+        evidence: override.evidence,
+      });
     } else if (
       override?.status === "warning" &&
       override.details &&
       (result.status === "目視確認" || result.status === "要確認")
     ) {
       // warning は判定を上書きしないが、Claude が記載した懸念点は備考として引き継ぐ
-      result = { ...result, notes: result.notes ? `${result.notes}; ${override.details}` : override.details };
+      result = { ...result, notes: joinNotes(result.notes, override.details) };
     }
   }
 
@@ -772,11 +851,17 @@ function mergeResults(
   if (visualData) {
     const check = visualData.checks.find((c) => c.criterion === criterion.id);
     if (check && check.result !== "warning") {
-      result = {
+      result = applyOverrideStatus(result, {
         status: check.result === "pass" ? "適合" : "不適合",
         source: "自動判定(Visual)",
-        notes: check.result === "fail" ? check.details : result.notes,
-      };
+        // pass 時も判定根拠の details を「証拠:」として備考に残す（矛盾検証のため）
+        notes: check.result === "fail"
+          ? check.details
+          : hasEvidence(check.details)
+            ? joinNotes(result.notes, `証拠: ${check.details.trim()}`)
+            : result.notes,
+        evidence: check.details,
+      });
     }
   }
 
@@ -786,11 +871,17 @@ function mergeResults(
       (r) => r.criterion === criterion.id
     );
     if (check && check.status !== "warning") {
-      result = {
+      result = applyOverrideStatus(result, {
         status: check.status === "pass" ? "適合" : "不適合",
         source: "自動判定(Interactive)",
-        notes: check.status === "fail" ? check.details : result.notes,
-      };
+        // pass 時も判定根拠の details を「証拠:」として備考に残す（矛盾検証のため）
+        notes: check.status === "fail"
+          ? check.details
+          : hasEvidence(check.details)
+            ? joinNotes(result.notes, `証拠: ${check.details.trim()}`)
+            : result.notes,
+        evidence: check.details,
+      });
     }
   }
 
@@ -799,7 +890,7 @@ function mergeResults(
 
 // --- merged-result.json 出力 ---
 
-interface MergedResultItem {
+export interface MergedResultItem {
   no: number;
   criterion: string;
   category: string;
@@ -810,16 +901,18 @@ interface MergedResultItem {
   status: ResultStatus;
   displayLabel: string;
   notes: string;
+  // 前段の不適合を後段判定が適合で覆そうとした項目（詳細は notes の「⚠️ 判定矛盾」を参照）
+  conflict: boolean;
 }
 
-interface MergedResult {
+export interface MergedResult {
   url: string;
   testDate: string;
   summary: { pass: number; fail: number; unknown: number };
   items: MergedResultItem[];
 }
 
-function buildMergedResult(
+export function buildMergedResult(
   url: string,
   testDate: string,
   axeData: AxeResult,
@@ -850,6 +943,7 @@ function buildMergedResult(
       status: result.status,
       displayLabel,
       notes: result.notes,
+      conflict: result.conflict ?? false,
     });
   }
 
@@ -1218,7 +1312,7 @@ async function generateMultiUrlExcel(manifest: Manifest, outputPath: string): Pr
       ? loadJson<InteractiveTestOutput>(entry.interactiveJson)
       : undefined;
     const claudeOverrides = entry.overridesJson && existsSync(entry.overridesJson)
-      ? loadJson<ClaudeOverridesResult>(entry.overridesJson)
+      ? loadClaudeOverrides(entry.overridesJson, entry.label)
       : undefined;
 
     const summary = generateDetailSheet(
@@ -1282,44 +1376,58 @@ function loadJson<T>(path: string): T {
   return JSON.parse(content) as T;
 }
 
-const args = parseArgs();
-
-if (args.manifestPath) {
-  // マルチURL モード
-  const manifest = loadJson<Manifest>(args.manifestPath);
-  // manifest.json 内の相対パスを manifest.json の場所基準で解決する
-  const manifestDir = dirname(resolve(args.manifestPath));
-  for (const entry of manifest.entries) {
-    const resolvePath = (p: string) => isAbsolute(p) ? p : resolve(manifestDir, p);
-    entry.axeJson = resolvePath(entry.axeJson);
-    if (entry.visualJson) entry.visualJson = resolvePath(entry.visualJson);
-    if (entry.interactiveJson) entry.interactiveJson = resolvePath(entry.interactiveJson);
-    if (entry.overridesJson) entry.overridesJson = resolvePath(entry.overridesJson);
+// claude-overrides.json を読み込み、証拠必須ガードを適用して降格ログを出力する
+function loadClaudeOverrides(path: string, label?: string): ClaudeOverridesResult {
+  const raw = loadJson<ClaudeOverridesResult>(path);
+  const { result, demotions } = sanitizeClaudeOverrides(raw);
+  for (const d of demotions) {
+    console.log(`  [証拠ガード]${label ? ` ${label}:` : ""} ${d}`);
   }
-  generateMultiUrlExcel(manifest, args.outputPath).catch((err) => {
-    console.error("Error:", err.message);
-    process.exit(1);
-  });
-} else if (args.jsonPath) {
-  // レガシー単一URL モード
-  const axeData = loadJson<AxeResult>(args.jsonPath);
+  return result;
+}
 
-  const visualData = args.visualJsonPath && existsSync(args.visualJsonPath)
-    ? loadJson<VisualTestOutput>(args.visualJsonPath)
-    : undefined;
+function main(): void {
+  const args = parseArgs();
 
-  const interactiveData = args.interactiveJsonPath && existsSync(args.interactiveJsonPath)
-    ? loadJson<InteractiveTestOutput>(args.interactiveJsonPath)
-    : undefined;
-
-  const claudeOverrides = args.overridesJsonPath && existsSync(args.overridesJsonPath)
-    ? loadJson<ClaudeOverridesResult>(args.overridesJsonPath)
-    : undefined;
-
-  generateSingleUrlExcel(axeData, args.outputPath, visualData, interactiveData, claudeOverrides).catch(
-    (err) => {
+  if (args.manifestPath) {
+    // マルチURL モード
+    const manifest = loadJson<Manifest>(args.manifestPath);
+    // manifest.json 内の相対パスを manifest.json の場所基準で解決する
+    const manifestDir = dirname(resolve(args.manifestPath));
+    for (const entry of manifest.entries) {
+      const resolvePath = (p: string) => isAbsolute(p) ? p : resolve(manifestDir, p);
+      entry.axeJson = resolvePath(entry.axeJson);
+      if (entry.visualJson) entry.visualJson = resolvePath(entry.visualJson);
+      if (entry.interactiveJson) entry.interactiveJson = resolvePath(entry.interactiveJson);
+      if (entry.overridesJson) entry.overridesJson = resolvePath(entry.overridesJson);
+    }
+    generateMultiUrlExcel(manifest, args.outputPath).catch((err) => {
       console.error("Error:", err.message);
       process.exit(1);
-    }
-  );
+    });
+  } else if (args.jsonPath) {
+    // レガシー単一URL モード
+    const axeData = loadJson<AxeResult>(args.jsonPath);
+
+    const visualData = args.visualJsonPath && existsSync(args.visualJsonPath)
+      ? loadJson<VisualTestOutput>(args.visualJsonPath)
+      : undefined;
+
+    const interactiveData = args.interactiveJsonPath && existsSync(args.interactiveJsonPath)
+      ? loadJson<InteractiveTestOutput>(args.interactiveJsonPath)
+      : undefined;
+
+    const claudeOverrides = args.overridesJsonPath && existsSync(args.overridesJsonPath)
+      ? loadClaudeOverrides(args.overridesJsonPath)
+      : undefined;
+
+    generateSingleUrlExcel(axeData, args.outputPath, visualData, interactiveData, claudeOverrides).catch(
+      (err) => {
+        console.error("Error:", err.message);
+        process.exit(1);
+      }
+    );
+  }
 }
+
+if (import.meta.main) main();
