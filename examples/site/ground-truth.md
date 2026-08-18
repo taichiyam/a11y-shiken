@@ -24,7 +24,7 @@ best-practice タグのルール（`region` / `landmark-one-main` / `heading-ord
 | ID | SC | レベル | ページ | 箇所（セレクタ） | 仕込み内容 | 期待判定 | 検出経路 |
 |----|----|--------|--------|------------------|-----------|----------|----------|
 | NG-01 | 2.4.1 | A | 全ページ | `body` 直下の文書構造 | `header` / `nav` / `main` / `footer` を `div` に置換しランドマークなし。スキップリンクもなし | 不適合 | AI判定・目視（各ページに h1 があるため axe `bypass` は発火しない） |
-| NG-02 | 2.4.7 | AA | 全ページ | `style.css` の `:focus` | `outline: none` でフォーカスインジケーターを消去 | 不適合 | Interactive: `testFocusVisible`（fail。ng 全3ページで実測済み）。旧実装は computed `outline` ショートハンド（`rgb(...) none 0px`）を文字列 `"none"` と比較していたため検出できなかったが、issue #10 で個別プロパティ（`outlineStyle` / `outlineWidth` / `boxShadow`）比較に修正済み |
+| NG-02 | 2.4.7 | AA | 全ページ | `style.css` の `:focus` | `outline: none` でフォーカスインジケーターを消去 | 不適合 | Interactive: `testFocusVisible`（fail。ng 全3ページで実測済み）。旧実装は computed `outline` ショートハンド（`rgb(...) none 0px`）を文字列 `"none"` と比較していたため検出できなかったが、issue #10 でフォーカス前後の computed style 差分（outline / box-shadow / 背景色・枠線色の変化）による判定に修正済み（常時付与の装飾 box-shadow では誤カウントしない） |
 | NG-03 | 4.1.2 | A | 全ページ | ヘッダー検索ボタン `.search-form button` | 虫眼鏡アイコンのみでアクセシブルネームなし | 不適合 | axe: `button-name` |
 | NG-04 | 3.2.3 | AA | contact.html | `.site-nav` | ナビゲーションの順序・ラベルが他ページと異なる（「施設案内」→「ご案内」、並び順も変更） | 不適合 | AI判定・目視（3ページの比較が必要） |
 
@@ -104,8 +104,9 @@ Visual テスト（`a11y-visual-test.ts`）では ng 版で `checkHeadingStructu
 `checkLabelInName`（送信ボタン）、`checkNonTextContrast`（フォーム枠線 1.36:1）が検出されることを確認済み。
 
 issue #10 の false pass 是正後（2026-08-18 再実測）: Interactive テスト（`a11y-interactive-test.ts`）の 2.4.7 `testFocusVisible` が
-ng 全3ページで fail（サンプル全要素でフォーカススタイルなし）を検出。ok 版は全3ページとも fail 0 件で、
-3.2.1 / 3.2.2 は URL・DOM スナップショット比較のうえ pass、2.4.7 は「スタイル確認済み・視認性は目視確認」の warning となる。
+ng 全3ページで fail（サンプル全要素でフォーカスによるスタイル変化なし）を検出。ok 版は全3ページとも fail 0 件で、
+3.2.1 / 3.2.2 は URL・DOM スナップショット比較 + ナビゲーション監視のうえ pass（contact は tel / select / checkbox を含む
+5 フィールドを検査）、2.4.7 は「スタイル変化確認済み・視認性は目視確認」の warning となる。
 
 ## SC カバレッジ
 

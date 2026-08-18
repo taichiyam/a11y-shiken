@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 
-import type { ElementHandle, Page } from "playwright";
+import type { ElementHandle, Frame, Page } from "playwright";
 import { mkdir } from "fs/promises";
 import { join } from "path";
 import { launchStableBrowser, gotoStable } from "./lib/stable-browser";
@@ -45,6 +45,22 @@ function parseArgs(): CliArgs {
 
   return { url, screenshotDir };
 }
+
+/**
+ * フォーカスインジケータ判定用のスタイルプローブ（page context で実行される）。
+ * 外側の変数を参照しない純粋関数であること（Playwright がソースを直列化して送るため）。
+ */
+const readFocusStyles = (node: Element) => {
+  const s = window.getComputedStyle(node);
+  return {
+    outlineStyle: s.outlineStyle,
+    outlineWidth: s.outlineWidth,
+    outlineColor: s.outlineColor,
+    boxShadow: s.boxShadow,
+    backgroundColor: s.backgroundColor,
+    borderColor: s.borderColor,
+  };
+};
 
 /**
  * 2.4.7 フォーカス可視化
@@ -101,6 +117,16 @@ async function testFocusVisible(page: Page, screenshotDir: string): Promise<Test
 
     for (const index of sampleIndices) {
       const element = focusableElements[index];
+
+      // 非フォーカス時のベースラインスタイルを取得する。
+      // 直前の操作でこの要素自身がフォーカスされている可能性があるため、いったんフォーカスを外す
+      // （キーボードモダリティは直前の Tab 押下で維持されるため :focus-visible 判定は壊れない）。
+      await page.evaluate(() => {
+        const active = document.activeElement as HTMLElement | null;
+        if (active && active !== document.body) active.blur();
+      });
+      const stylesBefore = await element.evaluate(readFocusStyles);
+
       await element.focus();
       await page.waitForTimeout(100); // フォーカス描画を待つ
 
@@ -108,18 +134,25 @@ async function testFocusVisible(page: Page, screenshotDir: string): Promise<Test
       await page.screenshot({ path: screenshotPath });
       screenshots.push(screenshotPath);
 
-      // フォーカススタイルの有無を確認（outline または box-shadow）。
-      // computed の outline ショートハンドは「rgb(...) none 0px」形式で返るため、
-      // 文字列全体を "none" と比較しても outline: none を検出できない。個別プロパティで判定する。
-      // outlineStyle "auto" は UA デフォルトのフォーカスリング（幅の計算値に依存しない）。
-      const hasVisibleFocus = await element.evaluate((el) => {
-        const styles = window.getComputedStyle(el);
-        const outlineVisible =
-          styles.outlineStyle !== "none" &&
-          (styles.outlineStyle === "auto" || parseFloat(styles.outlineWidth) > 0);
-        const boxShadowVisible = styles.boxShadow !== "none";
-        return outlineVisible || boxShadowVisible;
-      });
+      const stylesAfter = await element.evaluate(readFocusStyles);
+
+      // フォーカスによって「生じた」スタイル差分だけをインジケータとして数える。
+      // 「boxShadow !== none」のような絶対値判定では、常時付与されている装飾用 box-shadow を
+      // 持つ要素が outline: none でも「インジケータあり」と誤カウントされる（false pass）。
+      // outline は computed ショートハンドが「rgb(...) none 0px」形式で返るため個別プロパティで
+      // 判定する。outlineStyle "auto" は UA デフォルトのフォーカスリング（幅の計算値に依存しない）。
+      const outlineVisible =
+        stylesAfter.outlineStyle !== "none" &&
+        (stylesAfter.outlineStyle === "auto" || parseFloat(stylesAfter.outlineWidth) > 0);
+      const outlineChanged =
+        stylesBefore.outlineStyle !== stylesAfter.outlineStyle ||
+        stylesBefore.outlineWidth !== stylesAfter.outlineWidth ||
+        stylesBefore.outlineColor !== stylesAfter.outlineColor;
+      const hasVisibleFocus =
+        (outlineVisible && outlineChanged) ||
+        stylesBefore.boxShadow !== stylesAfter.boxShadow ||
+        stylesBefore.backgroundColor !== stylesAfter.backgroundColor ||
+        stylesBefore.borderColor !== stylesAfter.borderColor;
 
       if (hasVisibleFocus) {
         visibleFocusCount++;
@@ -136,7 +169,7 @@ async function testFocusVisible(page: Page, screenshotDir: string): Promise<Test
         name: "フォーカス可視化",
         status: "warning",
         source: "自動判定(Interactive)",
-        details: `${sampleSize}個中${visibleFocusCount}個の操作要素でフォーカススタイル（outline / box-shadow）を確認。実際の視認性（コントラスト・太さ）は自動検証できないため、スクリーンショットの目視確認が必要です。`,
+        details: `${sampleSize}個中${visibleFocusCount}個の操作要素でフォーカスによるスタイル変化（outline / box-shadow / 背景色・枠線色）を確認。実際の視認性（コントラスト・太さ）は自動検証できないため、スクリーンショットの目視確認が必要です。`,
         screenshots,
       };
     } else {
@@ -753,7 +786,7 @@ async function testOnFocus(page: Page, screenshotDir: string): Promise<TestResul
       };
     }
 
-    let urlChanges = 0;
+    let navigationChanges = 0;
     const domChangedSelectors: string[] = [];
 
     // サンプリング
@@ -763,36 +796,47 @@ async function testOnFocus(page: Page, screenshotDir: string): Promise<TestResul
       (_, i) => Math.floor((i * focusableElements.length) / sampleSize)
     );
 
-    for (const index of sampleIndices) {
-      const element = focusableElements[index];
-      const urlBefore = page.url();
-      const domBefore = await takeDomSnapshot(page);
+    // 同一 URL への reload / location.replace は URL 文字列比較では検出できないため、
+    // メインフレームのナビゲーションイベントも監視して「ページ遷移」として扱う。
+    let navigated = false;
+    const onFrameNavigated = (frame: Frame) => {
+      if (frame === page.mainFrame()) navigated = true;
+    };
+    page.on("framenavigated", onFrameNavigated);
 
-      await element.focus();
-      await page.waitForTimeout(100);
+    try {
+      for (const index of sampleIndices) {
+        const element = focusableElements[index];
+        const urlBefore = page.url();
+        const domBefore = await takeDomSnapshot(page);
+        navigated = false;
 
-      const urlAfter = page.url();
+        await element.focus();
+        await page.waitForTimeout(100);
 
-      if (urlBefore !== urlAfter) {
-        // ページ遷移が起きた時点で fail 確定。遷移後の古い要素ハンドルに focus し続けると
-        // 例外で warning に化けてしまう（fail の取りこぼし）ため、ここで打ち切る。
-        urlChanges++;
-        break;
+        if (page.url() !== urlBefore || navigated) {
+          // ページ遷移が起きた時点で fail 確定。遷移後の古い要素ハンドルに focus し続けると
+          // 例外で warning に化けてしまう（fail の取りこぼし）ため、ここで打ち切る。
+          navigationChanges++;
+          break;
+        }
+
+        const domAfter = await takeDomSnapshot(page);
+        if (snapshotChanged(domBefore, domAfter)) {
+          domChangedSelectors.push(await describeElement(element));
+        }
       }
-
-      const domAfter = await takeDomSnapshot(page);
-      if (snapshotChanged(domBefore, domAfter)) {
-        domChangedSelectors.push(await describeElement(element));
-      }
+    } finally {
+      page.off("framenavigated", onFrameNavigated);
     }
 
-    if (urlChanges > 0) {
+    if (navigationChanges > 0) {
       return {
         criterion: "3.2.1",
         name: "フォーカス時の挙動",
         status: "fail",
         source: "自動判定(Interactive)",
-        details: `${sampleSize}個中${urlChanges}個の要素でフォーカス時にページ遷移が発生しました。`,
+        details: `${sampleSize}個中${navigationChanges}個の要素でフォーカス時にページ遷移（同一URLへの再読み込みを含む）が発生しました。`,
       };
     }
 
@@ -827,88 +871,188 @@ async function testOnFocus(page: Page, screenshotDir: string): Promise<TestResul
 }
 
 /**
+ * 3.2.2 の検査対象フィールドの収集結果。
+ * targets: 自動操作（値の入力・変更）が可能なフィールド
+ * unsupported: 値を持つが自動操作に未対応の input タイプ（date / range / file 等）。
+ *              残っている場合は pass を出さない（未検証のフィールドを「問題なし」にしない）。
+ */
+interface InputTarget {
+  element: ElementHandle<SVGElement | HTMLElement>;
+  kind: "fill" | "select" | "toggle";
+  fillValue: string;
+}
+
+async function collectInputTargets(
+  page: Page
+): Promise<{ targets: InputTarget[]; unsupportedTypes: string[] }> {
+  const targets: InputTarget[] = [];
+  const unsupportedTypes: string[] = [];
+
+  const candidates = await page.$$('input:not([type="hidden"]), textarea, select');
+  for (const element of candidates) {
+    const info = await element
+      .evaluate((node) => {
+        const tag = node.tagName.toLowerCase();
+        const type =
+          tag === "input" ? (node.getAttribute("type") || "text").toLowerCase() : tag;
+        const optionCount = tag === "select" ? (node as HTMLSelectElement).options.length : 0;
+        return { tag, type, optionCount };
+      })
+      .catch(() => null);
+    if (!info) continue;
+    if (!(await element.isVisible().catch(() => false))) continue;
+
+    if (info.tag === "textarea") {
+      targets.push({ element, kind: "fill", fillValue: "test" });
+      continue;
+    }
+    if (info.tag === "select") {
+      // 選択肢が2つ以上ある select のみ値を変更できる（change イベントによる自動遷移は
+      // 3.2.2 の古典的な違反パターン）。選択肢が1つ以下なら値を変更できず対象外。
+      if (info.optionCount >= 2) targets.push({ element, kind: "select", fillValue: "" });
+      continue;
+    }
+    switch (info.type) {
+      case "text":
+      case "email":
+      case "search":
+      case "tel":
+      case "url":
+      case "password":
+        targets.push({ element, kind: "fill", fillValue: "test" });
+        break;
+      case "number":
+        targets.push({ element, kind: "fill", fillValue: "1" });
+        break;
+      case "checkbox":
+      case "radio":
+        targets.push({ element, kind: "toggle", fillValue: "" });
+        break;
+      case "submit":
+      case "button":
+      case "reset":
+      case "image":
+        // 値の入力・変更を伴わないボタン類は 3.2.2 の対象外
+        break;
+      default:
+        // date / time / range / color / file 等は自動操作未対応
+        unsupportedTypes.push(info.type);
+    }
+  }
+
+  return { targets, unsupportedTypes };
+}
+
+/**
  * 3.2.2 入力時の挙動
- * テキスト入力時にURL/DOMを比較し、自動送信などの予期しない変化がないか確認
+ * フォームフィールドの値を入力・変更し、URL/DOMを比較して自動送信などの予期しない変化がないか確認
  */
 async function testOnInput(page: Page, screenshotDir: string): Promise<TestResult> {
   try {
-    const inputElements = await page.$$('input[type="text"], input[type="email"], input[type="search"], textarea');
+    const { targets, unsupportedTypes } = await collectInputTargets(page);
+    const uniqueUnsupported = [...new Set(unsupportedTypes)];
 
-    if (inputElements.length === 0) {
+    if (targets.length === 0 && uniqueUnsupported.length === 0) {
       return {
         criterion: "3.2.2",
         name: "入力時の挙動",
         status: "pass",
         source: "自動判定(Interactive)",
-        details: "テキスト入力フィールドが見つかりませんでした。該当コンテンツなし。",
+        details: "値を入力・変更できるフォームフィールドが見つかりませんでした。該当コンテンツなし。",
       };
     }
 
-    // 表示されている（visible）要素のみをフィルタリング
-    const visibleElements: typeof inputElements = [];
-    for (const element of inputElements) {
-      const isVisible = await element.isVisible();
-      if (isVisible) {
-        visibleElements.push(element);
-      }
-    }
-
-    if (visibleElements.length === 0) {
+    if (targets.length === 0) {
       return {
         criterion: "3.2.2",
         name: "入力時の挙動",
-        status: "pass",
+        status: "warning",
         source: "自動判定(Interactive)",
-        details: "表示されているテキスト入力フィールドが見つかりませんでした。該当コンテンツなし。",
+        details: `自動操作に未対応の入力タイプ（${uniqueUnsupported.join(", ")}）のみが存在します。入力時の挙動は目視確認が必要です。`,
       };
     }
 
-    let urlChanges = 0;
+    let navigationChanges = 0;
     let testedCount = 0;
     const domChangedSelectors: string[] = [];
 
     // サンプリング
-    const sampleSize = Math.min(5, visibleElements.length);
+    const sampleSize = Math.min(5, targets.length);
     const sampleIndices = Array.from(
       { length: sampleSize },
-      (_, i) => Math.floor((i * visibleElements.length) / sampleSize)
+      (_, i) => Math.floor((i * targets.length) / sampleSize)
     );
 
-    for (const index of sampleIndices) {
-      const element = visibleElements[index];
+    // 同一 URL への reload / location.replace は URL 文字列比較では検出できないため、
+    // メインフレームのナビゲーションイベントも監視して「ページ遷移」として扱う。
+    let navigated = false;
+    const onFrameNavigated = (frame: Frame) => {
+      if (frame === page.mainFrame()) navigated = true;
+    };
+    page.on("framenavigated", onFrameNavigated);
 
-      try {
-        const urlBefore = page.url();
+    try {
+      for (const index of sampleIndices) {
+        const target = targets[index];
 
-        await element.focus();
-        const domBefore = await takeDomSnapshot(page);
-        await element.fill("test", { timeout: 5000 }); // タイムアウトを短く設定
-        await page.waitForTimeout(500); // 自動送信を待つ
+        try {
+          const urlBefore = page.url();
 
-        const urlAfter = page.url();
+          await target.element.focus();
+          const domBefore = await takeDomSnapshot(page);
+          navigated = false;
 
-        if (urlBefore !== urlAfter) {
-          urlChanges++;
-        } else {
+          if (target.kind === "fill") {
+            await target.element.fill(target.fillValue, { timeout: 5000 });
+          } else if (target.kind === "select") {
+            // 現在と異なる選択肢を選び、change イベントによる遷移がないか確認する
+            const newIndex = await target.element.evaluate(
+              (node) => ((node as HTMLSelectElement).selectedIndex === 0 ? 1 : 0)
+            );
+            await target.element.selectOption({ index: newIndex }, { timeout: 5000 });
+          } else {
+            // checkbox は状態をトグル、radio は選択して change イベントによる遷移がないか確認する
+            const state = await target.element.evaluate((node) => {
+              const el = node as HTMLInputElement;
+              return { checked: el.checked, isRadio: el.type === "radio" };
+            });
+            if (state.isRadio || !state.checked) {
+              await target.element.check({ timeout: 5000 });
+            } else {
+              await target.element.uncheck({ timeout: 5000 });
+            }
+          }
+          await page.waitForTimeout(500); // 自動送信を待つ
+
+          if (page.url() !== urlBefore || navigated) {
+            // ページ遷移が起きた時点で fail 確定。遷移後の古いハンドル操作の例外で
+            // fail が warning に化けないよう、ここで打ち切る。
+            navigationChanges++;
+            testedCount++;
+            break;
+          }
+
           const domAfter = await takeDomSnapshot(page);
           if (snapshotChanged(domBefore, domAfter)) {
-            domChangedSelectors.push(await describeElement(element));
+            domChangedSelectors.push(await describeElement(target.element));
           }
+          testedCount++;
+        } catch (error) {
+          // 個別の要素でエラーが発生しても継続
+          continue;
         }
-        testedCount++;
-      } catch (error) {
-        // 個別の要素でエラーが発生しても継続
-        continue;
       }
+    } finally {
+      page.off("framenavigated", onFrameNavigated);
     }
 
-    if (urlChanges > 0) {
+    if (navigationChanges > 0) {
       return {
         criterion: "3.2.2",
         name: "入力時の挙動",
         status: "fail",
         source: "自動判定(Interactive)",
-        details: `${sampleSize}個中${urlChanges}個の入力フィールドで入力時にページ遷移が発生しました。`,
+        details: `${sampleSize}個中${navigationChanges}個のフォームフィールドで値の入力・変更時にページ遷移（同一URLへの再読み込みを含む）が発生しました。`,
       };
     }
 
@@ -919,7 +1063,7 @@ async function testOnInput(page: Page, screenshotDir: string): Promise<TestResul
         name: "入力時の挙動",
         status: "warning",
         source: "自動判定(Interactive)",
-        details: `${sampleSize}個中${testedCount}個の入力フィールドしかテストできませんでした。残りは目視確認が必要です。`,
+        details: `${sampleSize}個中${testedCount}個のフォームフィールドしかテストできませんでした。残りは目視確認が必要です。`,
       };
     }
 
@@ -931,7 +1075,18 @@ async function testOnInput(page: Page, screenshotDir: string): Promise<TestResul
         name: "入力時の挙動",
         status: "warning",
         source: "自動判定(Interactive)",
-        details: `${sampleSize}個中${domChangedSelectors.length}個の入力フィールドで入力前後に DOM の変化を検出しました（${domChangedSelectors.join(", ")}）。フォーム自動送信・フォーカス移動などコンテキストの変化にあたらないか目視確認が必要です。`,
+        details: `${sampleSize}個中${domChangedSelectors.length}個のフォームフィールドで値の入力・変更前後に DOM の変化を検出しました（${domChangedSelectors.join(", ")}）。フォーム自動送信・フォーカス移動などコンテキストの変化にあたらないか目視確認が必要です。`,
+      };
+    }
+
+    if (uniqueUnsupported.length > 0) {
+      // 自動操作できないタイプのフィールドが残っている場合、「問題なし」とは言えない
+      return {
+        criterion: "3.2.2",
+        name: "入力時の挙動",
+        status: "warning",
+        source: "自動判定(Interactive)",
+        details: `サンプル${sampleSize}個のフォームフィールドでは値の入力・変更前後の URL・DOM に変化はありませんでしたが、自動操作に未対応の入力タイプ（${uniqueUnsupported.join(", ")}）が残っています。目視確認が必要です。`,
       };
     }
 
@@ -940,7 +1095,7 @@ async function testOnInput(page: Page, screenshotDir: string): Promise<TestResul
       name: "入力時の挙動",
       status: "pass",
       source: "自動判定(Interactive)",
-      details: `${sampleSize}個の入力フィールドで入力前後の URL・DOM に変化がないことを確認しました。`,
+      details: `${sampleSize}個のフォームフィールド（テキスト入力・select・checkbox / radio）で値の入力・変更前後の URL・DOM に変化がないことを確認しました。`,
     };
   } catch (error) {
     return {
