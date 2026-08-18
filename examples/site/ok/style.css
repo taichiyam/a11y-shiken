@@ -1,0 +1,364 @@
+/* つばめ台コミュニティセンター */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+  color: #1f2430;
+  background: #f5f7fa;
+  line-height: 1.7;
+}
+
+/* スキップリンク: 通常は視覚的に隠し、フォーカス時に表示する */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 10;
+  padding: 10px 16px;
+  background: #1d4ed8;
+  color: #ffffff;
+}
+
+.skip-link:focus {
+  left: 0;
+}
+
+/* 視覚的に隠すが支援技術には伝えるユーティリティ */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+:focus {
+  outline: 3px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+.site-header :focus,
+.site-footer :focus {
+  outline-color: #ffffff;
+}
+
+/* ヘッダー */
+.site-header {
+  background: #1e3a5f;
+  color: #ffffff;
+  padding: 16px 24px;
+}
+
+.header-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.brand {
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
+.brand a {
+  color: #ffffff;
+  text-decoration: none;
+  display: inline-block;
+  padding: 8px 0;
+}
+
+.search-form {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.search-form input {
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #767676;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.search-form button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 4px;
+  background: #fbd38d;
+  color: #1f2430;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+/* ナビゲーション */
+.site-nav {
+  background: #16304f;
+}
+
+.site-nav ul {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+  display: flex;
+}
+
+.site-nav a {
+  display: inline-block;
+  padding: 14px 20px;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.site-nav a[aria-current="page"] {
+  background: #1d4ed8;
+  font-weight: bold;
+}
+
+/* メイン */
+.content {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 24px 48px;
+}
+
+.content a {
+  color: #1d4ed8;
+  text-decoration: underline;
+  display: inline-block;
+}
+
+.content .sns-link {
+  display: inline-flex;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+h1 {
+  font-size: 1.8rem;
+  border-bottom: 3px solid #1d4ed8;
+  padding-bottom: 8px;
+}
+
+.section-title {
+  font-size: 1.4rem;
+  border-left: 6px solid #1d4ed8;
+  padding-left: 10px;
+  margin-top: 40px;
+}
+
+.card-title {
+  font-size: 1.1rem;
+  margin: 0 0 8px;
+}
+
+.muted {
+  color: #595959;
+}
+
+/* ヒーロー */
+.hero img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.tagline {
+  font-size: 1.1rem;
+}
+
+/* お知らせ */
+.news {
+  list-style: none;
+  padding: 0;
+}
+
+.news li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 4px;
+  border-bottom: 1px solid #d0d7e2;
+}
+
+.news .date {
+  color: #595959;
+  min-width: 7em;
+}
+
+.sns-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sns-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: #1e3a5f;
+  color: #ffffff;
+}
+
+.sns-link svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* カード */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.cards li {
+  background: #ffffff;
+  border: 1px solid #d0d7e2;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+/* テーブル */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+}
+
+caption,
+.table-title {
+  text-align: left;
+  font-weight: bold;
+  padding: 8px 0;
+}
+
+th,
+td,
+.th-like {
+  border: 1px solid #9aa7b8;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+th,
+.th-like {
+  background: #e8eef7;
+  font-weight: bold;
+}
+
+/* ギャラリー */
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.gallery figure {
+  margin: 0;
+}
+
+.gallery img {
+  width: 100%;
+  height: auto;
+  border: 1px solid #d0d7e2;
+  border-radius: 8px;
+}
+
+/* フォーム */
+.contact-form {
+  background: #ffffff;
+  border: 1px solid #d0d7e2;
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 640px;
+}
+
+.field {
+  margin-bottom: 20px;
+}
+
+.field label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid #767676;
+  border-radius: 4px;
+  background: #ffffff;
+}
+
+.field textarea {
+  min-height: 140px;
+}
+
+.agree {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.agree input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+}
+
+.submit-button {
+  display: inline-block;
+  min-height: 48px;
+  padding: 12px 32px;
+  border: none;
+  border-radius: 4px;
+  background: #1d4ed8;
+  color: #ffffff;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+/* フッター */
+.site-footer {
+  background: #1e3a5f;
+  color: #ffffff;
+  padding: 24px;
+}
+
+.footer-inner {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.site-footer .note {
+  font-size: 0.9rem;
+  border-top: 1px solid #4a6690;
+  margin-top: 16px;
+  padding-top: 12px;
+}
