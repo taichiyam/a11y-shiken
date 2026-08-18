@@ -1,0 +1,9 @@
+{
+  "name": "a11y-test",
+  "private": true,
+  "dependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "exceljs": "^4.4.0",
+    "playwright": "^1.49.0"
+  }
+}

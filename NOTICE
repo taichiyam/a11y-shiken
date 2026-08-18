@@ -1,0 +1,41 @@
+a11y-shiken
+Copyright (c) 2026 taichiyam
+
+This product depends on the following third-party software.
+Each is distributed under its own license, and this product does not
+modify or redistribute their source code.
+
+--------------------------------------------------------------------
+axe-core / @axe-core/playwright
+Copyright (c) Deque Systems, Inc.
+Licensed under the Mozilla Public License 2.0 (MPL-2.0)
+https://github.com/dequelabs/axe-core
+https://www.mozilla.org/en-US/MPL/2.0/
+
+  All automated accessibility rule detection in this product is
+  performed by axe-core. Results reported by this tool that are
+  labeled as automated checks originate from axe-core.
+
+--------------------------------------------------------------------
+Playwright
+Copyright (c) Microsoft Corporation
+Licensed under the Apache License 2.0
+https://github.com/microsoft/playwright
+
+--------------------------------------------------------------------
+ExcelJS
+Copyright (c) Guyon Roche
+Licensed under the MIT License
+https://github.com/exceljs/exceljs
+
+--------------------------------------------------------------------
+marked / DOMPurify (bundled in the HTML report viewer)
+marked - Copyright (c) Christopher Jeffrey, MIT License
+DOMPurify - Copyright (c) Cure53, Apache-2.0 / MPL-2.0 dual license
+--------------------------------------------------------------------
+
+Reference materials
+
+WCAG 2.2 / JIS X 8341-3:2016 are standards published by W3C and JISC.
+This product is not endorsed by, affiliated with, or certified by
+W3C, JISC, WAIC, or the Digital Agency of Japan.

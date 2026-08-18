@@ -1,0 +1,493 @@
+{
+  "source": "デジタル庁 ウェブアクセシビリティ導入ガイドブック 2024-03-29版 §3.1・§3.2",
+  "url": "https://a11yc.com/city-komaru/practice/?criteria=1.1.1a_ok",
+  "testDate": "2026-08-18 09:00",
+  "summary": {
+    "要修正": 1,
+    "一部未確認": 10,
+    "確認OK": 6,
+    "判定対象外": 0
+  },
+  "items": [
+    {
+      "no": 1,
+      "severity": "重大",
+      "title": "自動再生はさせない",
+      "status": "確認OK",
+      "criteria": [
+        {
+          "id": "1.4.2",
+          "inScope": true,
+          "status": "適合",
+          "name": "音声の制御",
+          "source": "自動判定(Visual)",
+          "notes": ""
+        }
+      ],
+      "counts": {
+        "confirmed": 1,
+        "failed": 0,
+        "unconfirmed": 0,
+        "outOfScope": 0
+      }
+    },
+    {
+      "no": 2,
+      "severity": "重大",
+      "title": "袋小路に陥らせない（キーボードトラップ）",
+      "status": "確認OK",
+      "criteria": [
+        {
+          "id": "2.1.2",
+          "inScope": true,
+          "status": "適合",
+          "name": "キーボードトラップなし",
+          "source": "自動判定(Interactive)",
+          "notes": ""
+        }
+      ],
+      "counts": {
+        "confirmed": 1,
+        "failed": 0,
+        "unconfirmed": 0,
+        "outOfScope": 0
+      }
+    },
+    {
+      "no": 3,
+      "severity": "重大",
+      "title": "光の点滅は危険",
+      "status": "一部未確認",
+      "criteria": [
+        {
+          "id": "2.3.1",
+          "inScope": true,
+          "status": "目視確認",
+          "name": "3回の閃光、又は閾値以下",
+          "source": "要目視確認",
+          "notes": ""
+        }
+      ],
+      "counts": {
+        "confirmed": 0,
+        "failed": 0,
+        "unconfirmed": 1,
+        "outOfScope": 0
+      }
+    },
+    {
+      "no": 4,
+      "severity": "重大",
+      "title": "自動でコンテンツを切り替えない",
+      "status": "一部未確認",
+      "criteria": [
+        {
+          "id": "2.2.2",
+          "inScope": true,
+          "status": "目視確認",
+          "name": "一時停止、停止、非表示",
+          "source": "要目視確認",
+          "notes": ""
+        }
+      ],
+      "counts": {
+        "confirmed": 0,
+        "failed": 0,
+        "unconfirmed": 1,
+        "outOfScope": 0
+      }
+    },
+    {
+      "no": 5,
+      "severity": "必須",
+      "title": "画像に代替テキストを付与する",
+      "status": "確認OK",
+      "criteria": [
+        {
+          "id": "1.1.1",
+          "inScope": true,
+          "status": "適合",
+          "name": "非テキストコンテンツ",
+          "source": "自動判定",
+          "notes": ""
+        }
+      ],
+      "counts": {
+        "confirmed": 1,
+        "failed": 0,
+        "unconfirmed": 0,
+        "outOfScope": 0
+      }
+    },
+    {
+      "no": 6,
+      "severity": "必須",
+      "title": "キーボードだけで全機能にアクセスできる",
+      "status": "一部未確認",
+      "criteria": [
+        {
+          "id": "2.1.1",
+          "inScope": true,
+          "status": "目視確認",
+          "name": "キーボード",
+          "source": "要目視確認",
+          "notes": ""
+        },
+        {
+          "id": "2.4.3",
+          "inScope": true,
+          "status": "目視確認",
+          "name": "フォーカス順序",
+          "source": "要目視確認",
+          "notes": ""
+        },
+        {
+          "id": "2.4.7",
+          "inScope": true,
+          "status": "適合",
+          "name": "フォーカスの可視化",
+          "source": "自動判定(Interactive)",
+          "notes": ""
+        },
+        {
+          "id": "3.2.1",
+          "inScope": true,
+          "status": "適合",
+          "name": "フォーカス時",
+          "source": "自動判定(Interactive)",
+          "notes": ""
+        },
+        {
+          "id": "3.2.2",
+          "inScope": true,
+          "status": "適合",
+          "name": "入力時",
+          "source": "自動判定(Interactive)",
+          "notes": ""
+        }
+      ],
+      "counts": {
+        "confirmed": 3,
+        "failed": 0,
+        "unconfirmed": 2,
+        "outOfScope": 0
+      }
+    },
+    {
+      "no": 7,
+      "severity": "必須",
+      "title": "操作に制限時間を設けない",
+      "status": "一部未確認",
+      "criteria": [
+        {
+          "id": "2.2.1",
+          "inScope": true,
+          "status": "目視確認",
+          "name": "タイミング調整可能",
+          "source": "要目視確認",
+          "notes": ""
+        },
+        {
+          "id": "2.2.2",
+          "inScope": true,
+          "status": "目視確認",
+          "name": "一時停止、停止、非表示",
+          "source": "要目視確認",
+          "notes": ""
+        }
+      ],
+      "counts": {
+        "confirmed": 0,
+        "failed": 0,
+        "unconfirmed": 2,
+        "outOfScope": 0
+      }
+    },
+    {
+      "no": 8,
+      "severity": "必須",
+      "title": "単一の表現だけで情報を伝えない",
+      "status": "一部未確認",
+      "criteria": [
+        {
+          "id": "1.3.1",
+          "inScope": true,
+          "status": "適合",
+          "name": "情報及び関係性",
+          "source": "自動判定(Visual)",
+          "notes": ""
+        },
+        {
+          "id": "1.3.3",
+          "inScope": true,
+          "status": "目視確認",
+          "name": "感覚的な特徴",
+          "source": "要目視確認",
+          "notes": ""
+        },
+        {
+          "id": "1.4.1",
+          "inScope": true,
+          "status": "目視確認",
+          "name": "色の使用",
+          "source": "要目視確認",
+          "notes": ""
+        }
+      ],
+      "counts": {
+        "confirmed": 1,
+        "failed": 0,
+        "unconfirmed": 2,
+        "outOfScope": 0
+      }
+    },
+    {
+      "no": 9,
+      "severity": "必須",
+      "title": "読み上げ順序が意味の通る順になっている",
+      "status": "一部未確認",
+      "criteria": [
+        {
+          "id": "1.3.1",
+          "inScope": true,
+          "status": "適合",
+          "name": "情報及び関係性",
+          "source": "自動判定(Visual)",
+          "notes": ""
+        },
+        {
+          "id": "1.3.2",
+          "inScope": true,
+          "status": "目視確認",
+          "name": "意味のある順序",
+          "source": "要目視確認",
+          "notes": ""
+        },
+        {
+          "id": "2.4.3",
+          "inScope": true,
+          "status": "目視確認",
+          "name": "フォーカス順序",
+          "source": "要目視確認",
+          "notes": ""
+        }
+      ],
+      "counts": {
+        "confirmed": 1,
+        "failed": 0,
+        "unconfirmed": 2,
+        "outOfScope": 0
+      }
+    },
+    {
+      "no": 10,
+      "severity": "必須",
+      "title": "見出し要素でセクションを表現する",
+      "status": "一部未確認",
+      "criteria": [
+        {
+          "id": "1.3.1",
+          "inScope": true,
+          "status": "適合",
+          "name": "情報及び関係性",
+          "source": "自動判定(Visual)",
+          "notes": ""
+        },
+        {
+          "id": "2.4.6",
+          "inScope": true,
+          "status": "目視確認",
+          "name": "見出し及びラベル",
+          "source": "要目視確認",
+          "notes": ""
+        },
+        {
+          "id": "2.4.1",
+          "inScope": true,
+          "status": "適合",
+          "name": "ブロックスキップ",
+          "source": "自動判定",
+          "notes": ""
+        },
+        {
+          "id": "2.4.10",
+          "inScope": false,
+          "outOfScopeReason": "Level AAA のため A+AA の判定対象外"
+        }
+      ],
+      "counts": {
+        "confirmed": 2,
+        "failed": 0,
+        "unconfirmed": 1,
+        "outOfScope": 1
+      }
+    },
+    {
+      "no": 11,
+      "severity": "必須",
+      "title": "文字と背景に十分なコントラスト比",
+      "status": "一部未確認",
+      "criteria": [
+        {
+          "id": "1.4.3",
+          "inScope": true,
+          "status": "要確認",
+          "name": "コントラスト（最低限）",
+          "source": "要目視確認",
+          "notes": "Elements must meet minimum color contrast ratio thresholds"
+        }
+      ],
+      "counts": {
+        "confirmed": 0,
+        "failed": 0,
+        "unconfirmed": 1,
+        "outOfScope": 0
+      }
+    },
+    {
+      "no": 12,
+      "severity": "必須",
+      "title": "拡大縮小しても情報が読み取れる",
+      "status": "要修正",
+      "criteria": [
+        {
+          "id": "1.4.4",
+          "inScope": true,
+          "status": "不適合",
+          "name": "テキストのサイズ変更",
+          "source": "自動判定(Interactive)",
+          "notes": "200%ズーム時にテキストの切れが検出されました。overflow: hidden による切り取りが発生しています。"
+        }
+      ],
+      "counts": {
+        "confirmed": 0,
+        "failed": 1,
+        "unconfirmed": 0,
+        "outOfScope": 0
+      }
+    },
+    {
+      "no": 13,
+      "severity": "必須",
+      "title": "文字・文字コード・フォントの注意",
+      "status": "確認OK",
+      "criteria": [
+        {
+          "id": "3.3.2",
+          "inScope": true,
+          "status": "適合",
+          "name": "ラベル又は説明",
+          "source": "自動判定",
+          "notes": ""
+        },
+        {
+          "id": "4.1.1",
+          "inScope": false,
+          "outOfScopeReason": "WCAG 2.2 で廃止"
+        },
+        {
+          "id": "4.1.2",
+          "inScope": true,
+          "status": "適合",
+          "name": "名前（name）、役割（role）及び値（value）",
+          "source": "自動判定",
+          "notes": ""
+        }
+      ],
+      "counts": {
+        "confirmed": 2,
+        "failed": 0,
+        "unconfirmed": 0,
+        "outOfScope": 1
+      }
+    },
+    {
+      "no": 14,
+      "severity": "必須",
+      "title": "ページタイトルを適切に表現する",
+      "status": "確認OK",
+      "criteria": [
+        {
+          "id": "2.4.2",
+          "inScope": true,
+          "status": "適合",
+          "name": "ページタイトル",
+          "source": "自動判定",
+          "notes": ""
+        }
+      ],
+      "counts": {
+        "confirmed": 1,
+        "failed": 0,
+        "unconfirmed": 0,
+        "outOfScope": 0
+      }
+    },
+    {
+      "no": 15,
+      "severity": "必須",
+      "title": "リンクを適切に表現する",
+      "status": "確認OK",
+      "criteria": [
+        {
+          "id": "2.4.4",
+          "inScope": true,
+          "status": "適合",
+          "name": "リンクの目的（コンテキスト内）",
+          "source": "自動判定",
+          "notes": ""
+        }
+      ],
+      "counts": {
+        "confirmed": 1,
+        "failed": 0,
+        "unconfirmed": 0,
+        "outOfScope": 0
+      }
+    },
+    {
+      "no": 16,
+      "severity": "必須",
+      "title": "ナビゲーションに一貫性をもたせる",
+      "status": "一部未確認",
+      "criteria": [
+        {
+          "id": "3.2.3",
+          "inScope": true,
+          "status": "目視確認",
+          "name": "一貫したナビゲーション",
+          "source": "要目視確認",
+          "notes": ""
+        }
+      ],
+      "counts": {
+        "confirmed": 0,
+        "failed": 0,
+        "unconfirmed": 1,
+        "outOfScope": 0
+      }
+    },
+    {
+      "no": 17,
+      "severity": "必須",
+      "title": "同じ機能には同じラベルをつける",
+      "status": "一部未確認",
+      "criteria": [
+        {
+          "id": "3.2.4",
+          "inScope": true,
+          "status": "目視確認",
+          "name": "一貫した識別性",
+          "source": "要目視確認",
+          "notes": ""
+        }
+      ],
+      "counts": {
+        "confirmed": 0,
+        "failed": 0,
+        "unconfirmed": 1,
+        "outOfScope": 0
+      }
+    }
+  ]
+}
