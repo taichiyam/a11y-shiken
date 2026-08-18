@@ -187,6 +187,25 @@ describe("mergeResults（遷移ルール: 不適合→適合の降格ガード�
     expect(result.notes).toContain("⚠️ 判定矛盾")
   })
 
+  test("Visual pass が不適合を覆すとき、許可根拠の details が「証拠:」として備考に残る", () => {
+    const result = mergeResults(
+      CRITERION,
+      axeViolation(),
+      visualOf("pass", "全要素で確認OK（12要素を検証）")
+    )
+    expect(result.notes).toContain("証拠: 全要素で確認OK（12要素を検証）")
+  })
+
+  test("Interactive pass が不適合を覆すとき、許可根拠の details が「証拠:」として備考に残る", () => {
+    const result = mergeResults(
+      CRITERION,
+      axeViolation(),
+      undefined,
+      interactiveOf("pass", "全フォーカス要素で確認OK")
+    )
+    expect(result.notes).toContain("証拠: 全フォーカス要素で確認OK")
+  })
+
   test("details が空の Visual pass は不適合を覆せない", () => {
     const result = mergeResults(CRITERION, axeViolation(), visualOf("pass", ""))
     expect(result.status).toBe("不適合")

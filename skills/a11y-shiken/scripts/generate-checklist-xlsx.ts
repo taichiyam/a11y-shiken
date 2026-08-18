@@ -854,7 +854,12 @@ export function mergeResults(
       result = applyOverrideStatus(result, {
         status: check.result === "pass" ? "適合" : "不適合",
         source: "自動判定(Visual)",
-        notes: check.result === "fail" ? check.details : result.notes,
+        // pass 時も判定根拠の details を「証拠:」として備考に残す（矛盾検証のため）
+        notes: check.result === "fail"
+          ? check.details
+          : hasEvidence(check.details)
+            ? joinNotes(result.notes, `証拠: ${check.details.trim()}`)
+            : result.notes,
         evidence: check.details,
       });
     }
@@ -869,7 +874,12 @@ export function mergeResults(
       result = applyOverrideStatus(result, {
         status: check.status === "pass" ? "適合" : "不適合",
         source: "自動判定(Interactive)",
-        notes: check.status === "fail" ? check.details : result.notes,
+        // pass 時も判定根拠の details を「証拠:」として備考に残す（矛盾検証のため）
+        notes: check.status === "fail"
+          ? check.details
+          : hasEvidence(check.details)
+            ? joinNotes(result.notes, `証拠: ${check.details.trim()}`)
+            : result.notes,
         evidence: check.details,
       });
     }
