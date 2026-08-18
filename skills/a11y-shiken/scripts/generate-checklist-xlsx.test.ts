@@ -237,6 +237,21 @@ describe("mergeResults（遷移ルール: 不適合→適合の降格ガード�
     expect(result.notes).toContain("証拠なしのため未確認に降格")
   })
 
+  test("矛盾発生後に後段 fail が上書きしても ⚠️ 判定矛盾の経緯は備考に残る", () => {
+    // axe 不適合 → Claude が証拠付き pass で覆す（矛盾）→ Interactive fail がさらに上書き
+    const result = mergeResults(
+      CRITERION,
+      axeViolation(),
+      undefined,
+      interactiveOf("fail", "キーボードトラップを検出"),
+      overridesOf({ status: "pass", details: "alt設定済み", evidence: "img[alt='ロゴ']" })
+    )
+    expect(result.status).toBe("不適合")
+    expect(result.conflict).toBe(true)
+    expect(result.notes).toContain("⚠️ 判定矛盾")
+    expect(result.notes).toContain("キーボードトラップを検出")
+  })
+
   test("矛盾フラグは後段の上書きを経ても消えない", () => {
     // Claude が証拠付きで不適合を覆した後、Interactive pass がさらに上書きしても conflict は維持される
     const result = mergeResults(

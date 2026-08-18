@@ -783,7 +783,8 @@ function applyOverrideStatus(
     return {
       status: proposed.status,
       source: proposed.source,
-      notes: proposed.notes,
+      // 既に矛盾が起きている場合は「⚠️ 判定矛盾」の経緯を備考から消さない
+      notes: current.conflict ? joinNotes(current.notes, proposed.notes) : proposed.notes,
       conflict: current.conflict,
     };
   }
