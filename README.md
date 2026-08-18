@@ -38,6 +38,8 @@ npx a11y-shiken@latest init --global
 
 動作確認済み: macOS 14+ / Ubuntu 22.04+
 
+Windows: 未対応（ネイティブ環境は未検証。WSL2 では動作する可能性があります）
+
 ---
 
 ## 使い方
