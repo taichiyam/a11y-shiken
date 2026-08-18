@@ -336,7 +336,8 @@ axe-coreで「未確認」となった項目について、ステップ2.9で取
    - ブラウザ操作が必要で判定不可 → **未確認**（担当: 要目視確認）
 
 4. **判定の決定性ルール（実行ごとのブレ防止のため厳守）:**
-   - **pass / fail の判定は、ツリー or HTML 上に具体的な証拠（要素・属性・値）を引用できる場合のみ**行う。`details` には必ずその証拠（該当要素のセレクタ・accessible name・属性値等）を記載する
+   - **pass / fail / not-applicable の判定は、ツリー or HTML 上に具体的な証拠（要素・属性・値）を引用できる場合のみ**行う。その証拠（該当要素のセレクタ・accessible name・属性値等）を必ず `evidence` フィールドに記載する
+   - **`evidence` が空・欠落の pass / fail / not-applicable は、統合スクリプトが機械的に `warning`（未確認）へ強制降格する**（降格はログと備考に記録される）。プロンプト頼みではなくコードで担保されているため、証拠なし判定は最終結果に反映されない
    - 証拠を引用できない・確信が持てない・「おそらく」で判断しそうになった場合は、**必ず `warning`（未確認・要目視確認）に倒す**。印象や推測で pass / fail を出さない
    - 「問題の可能性がある」程度の所見は fail にせず、warning + details に懸念点を記載する
    - 同一の入力（同じ a11y-tree.txt / HTML）に対しては同一の判定結果になることを意識する。判定に迷った履歴がある項目は warning に固定する
@@ -350,11 +351,12 @@ axe-coreで「未確認」となった項目について、ステップ2.9で取
 - `criterion`: WCAG達成基準番号（例: "1.2.1"）
 - `status`: "pass"（確認OK）/ "fail"（修正あり）/ "not-applicable"（該当なし→確認OK扱い）/ "warning"（判定不可、目視確認のまま）
 - `details`: 判定理由や問題内容
+- `evidence`: **pass / fail / not-applicable では必須。** ツリー or HTML から引用した具体的な証拠（該当要素のセレクタ・accessible name・属性値・「ツリー全体に video/audio 要素なし」等）。空・欠落の場合、スクリプトが該当判定を warning に強制降格する
 
 ```json
 {"overrides":[
-  {"criterion":"1.2.1","status":"not-applicable","details":"該当コンテンツなし"},
-  {"criterion":"1.3.2","status":"pass","details":"DOM順序が論理的"}
+  {"criterion":"1.2.1","status":"not-applicable","details":"該当コンテンツなし","evidence":"a11y-tree 全体に audio/video 要素が存在しない"},
+  {"criterion":"1.3.2","status":"pass","details":"DOM順序が論理的","evidence":"main 内の heading が h1→h2→h3 の順で出現"}
 ]}
 ```
 
@@ -410,6 +412,11 @@ Interactive テスト結果 > Visual テスト結果 > Claude判定 > axe-core
 - `not-applicable` は `pass`（確認OK）として扱う
 - axe-coreの1ルールが複数WCAG基準にマッピングされる場合、すべての基準に反映
 - violations が1つでもあれば passes より優先
+- **証拠必須ガード**: `evidence` が空・欠落の Claude 判定（pass / fail / not-applicable）は warning に強制降格し、降格をログと備考に記録する
+- **遷移ルール（安全側への遷移は自由、危険側への遷移は制限）**:
+  - 適合 → 不適合 の上書きは無条件で許可
+  - **不適合 → 適合 の降格は、上書き元の判定に証拠がある場合のみ許可**（Claude は `evidence`、Visual / Interactive は `details` が証拠）。証拠がなければ不適合を維持する
+  - 不適合 → 適合 を試みた項目は、上書きの成否を問わず `merged-result.json` に `conflict: true` を立て、備考に「⚠️ 判定矛盾」の経緯を必ず残す（Excel の備考列にも同じ内容が出力される）
 
 担当列には判定ソース（自動判定/自動判定(Visual)/自動判定(Interactive)/自動判定(Claude)/要目視確認）を表示する。
 
@@ -465,6 +472,7 @@ cd <skill_dir> && bun scripts/generate-baseline-view.ts \
 2. JSON の `summary` からサマリー件数を取得
 3. JSON の `items` 配列から55項目のチェックテーブルを生成
 4. `displayLabel` が「修正あり」の項目のみ詳細セクションを展開（axe-core の violations HTML スニペットや Claude 判定の根拠を `notes` から引用）
+5. `conflict: true` の項目は、備考の「⚠️ 判定矛盾」の記載をそのまま残す（要約・削除で消さない）。矛盾項目が1件以上ある場合は、サマリーの直後に「⚠️ 判定矛盾のあった項目」として No.・達成基準・経緯を列挙する
 
 **保存先:** `{OUTPUT_DIR}/report/markdown/{ラベル}.md`
 
