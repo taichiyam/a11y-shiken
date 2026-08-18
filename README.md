@@ -35,6 +35,7 @@ npx a11y-shiken@latest init --global
 | [Claude Code](https://claude.com/claude-code) | スキルとして動作します |
 | [bun](https://bun.sh/docs/installation) | 検査スクリプトの実行に必要です |
 | Playwright Chromium | 初回実行時に自動でインストールされます |
+| Windows | 未対応（ネイティブ環境は未検証。WSL2 では動作する可能性があります） |
 
 動作確認済み: macOS 14+ / Ubuntu 22.04+
 
