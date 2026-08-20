@@ -37,9 +37,9 @@ SKILL.md の指示に従って、Claude がスキル実行時に3つのテスト
 **優先順位**: Interactive テスト結果 > Visual テスト結果 > Claude判定 の順で上書き
 
 **判定ロジック**:
-1. axe-core の passes に含まれる項目 → **確認OK**（担当: 自動判定）
+1. axe-core の passes に含まれる項目 → その基準の `axeCoverage` が `"full"` なら **確認OK**（担当: 自動判定）、`"partial"`（達成基準の一部しか検証していない）なら **未確認**（担当: 要目視確認、issue #31）。`"full"` は 1.4.3 のみ
 2. axe-core の violations に含まれる項目 → **修正あり**（担当: 自動判定）
-3. axe-core の incomplete に含まれる項目 → **修正あり**（担当: 要目視確認）
+3. axe-core の incomplete に含まれる項目 → **未確認**（担当: 要目視確認）
 4. Visual テストで pass → **確認OK**（担当: 自動判定(Visual)）
 5. Visual テストで fail → **修正あり**（担当: 自動判定(Visual)）
 6. Visual テストで warning → **未確認**（担当: 要目視確認）
