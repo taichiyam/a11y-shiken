@@ -137,7 +137,8 @@ URL入力
    フラグと分岐は将来 full と判断できる基準が出たときのために残してある
 
    この axe-core 判定に、Claude → Visual → Interactive の順で結果を重ねる。
-   **warning は上書きせず**（下位の判定を維持し、未確認の項目には懸念点だけを備考へ引き継ぐ）、
+   **warning は上書きしない**（下位の判定を維持する。備考へ懸念点を引き継ぐのは Claude の warning だけで、
+   Visual / Interactive の warning は details ごと捨てられる）。
    **「適合」への上書きは証拠（Claude は `evidence`、Visual / Interactive は `details`）がある場合のみ**通す。
    詳細は `docs/how-it-works.md` 第3章
 

@@ -29,7 +29,7 @@ accessibility-test スキルは、3つの異なるテストツールで WCAG 2.2
 3. axe-core の passes に一致 → その基準の `axeCoverage` が `"full"` なら **確認OK**（担当: 自動判定）、`"partial"`（達成基準の一部しか検証していない）なら **未確認**（担当: 要目視確認、issue #31）。**現時点で `"full"` は0件なので、実際には常に未確認になる**
 4. いずれにも一致しない → **未確認**（担当: 要目視確認）
 5. Claude / Visual / Interactive の pass → **確認OK**、fail → **修正あり**（担当: それぞれの判定ソース）
-6. Claude / Visual / Interactive の **warning は判定を上書きしない**（下位の判定を維持する。未確認の項目には懸念点だけを備考へ引き継ぐ）
+6. Claude / Visual / Interactive の **warning は判定を上書きしない**（下位の判定を維持する）。備考へ懸念点を引き継ぐのは **Claude の warning だけ**で、Visual / Interactive の warning は `details` ごと捨てられる（内容は `visual-result.json` / `interactive-result.json` を参照）
 7. Claude の `not-applicable`（該当コンテンツなし）は pass と同じく **確認OK** として扱う
 
 **ガード（すべてスクリプト側で機械的に適用）**:

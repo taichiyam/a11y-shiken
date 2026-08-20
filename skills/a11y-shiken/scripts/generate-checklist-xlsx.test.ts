@@ -368,6 +368,30 @@ describe("mergeResults（axe-core カバレッジガード）", () => {
     expect(result.notes).toContain("axe-core は達成基準の一部のみ検証")
   })
 
+  test("[正常] 証拠なし pass の却下メモは、後段の証拠つき pass で適合になったとき残らないこと", () => {
+    const result = mergeResults(
+      PARTIAL_CRITERION,
+      axePass(),
+      visualOf("pass", ""),
+      interactiveOf("pass", "全12要素で確認OK")
+    )
+    expect(result.status).toBe("適合")
+    expect(result.source).toBe("自動判定(Interactive)")
+    expect(result.notes).toBe("証拠: 全12要素で確認OK")
+  })
+
+  test("[正常] 既に証拠つきで適合の項目に証拠なし pass が来ても、備考が汚れないこと", () => {
+    const result = mergeResults(
+      PARTIAL_CRITERION,
+      axePass(),
+      visualOf("pass", "全12要素で確認OK"),
+      interactiveOf("pass", "")
+    )
+    expect(result.status).toBe("適合")
+    expect(result.source).toBe("自動判定(Visual)")
+    expect(result.notes).toBe("証拠: 全12要素で確認OK")
+  })
+
   test("[異常] 検査が無く目視確認だった項目も、証拠なしの Visual pass では適合にならないこと", () => {
     const result = mergeResults(PARTIAL_CRITERION, axeFixture(), visualOf("pass", ""))
     expect(result.status).toBe("目視確認")

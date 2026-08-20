@@ -802,10 +802,12 @@ export interface CriterionResult {
   notes: string;
   // 前段の「不適合」を後段が「適合」で覆そうとした場合に立つ（上書きの成否を問わない）
   conflict?: boolean;
-  // axeCoverage: "partial" の基準で axe-core の pass を「要確認」に倒したときの説明。
-  // 統合の最後に notes へ合流する。後段の判定（Visual / Interactive / Claude）が
-  // 上書きした場合は破棄され、備考には残らない（適合の行に「適合と判定していません」を残さないため）
-  coverageNote?: string;
+  // 「この判定がまだ確定していない理由」の説明。統合の最後に notes へ合流する。
+  // 後段の判定（Visual / Interactive / Claude）が上書きした場合は破棄され、備考には残らない
+  // （適合の行に「適合と判定していません」「未確認を維持」を残さないため）。用途は2つ:
+  //   - axeCoverage: "partial" の基準で axe-core の pass を「要確認」に倒したときの説明
+  //   - 証拠がない「適合」への上書きを却下したときの説明（不適合からの却下は矛盾として notes に残す）
+  pendingNote?: string;
 }
 
 function evaluateCriterion(
@@ -845,7 +847,7 @@ function evaluateCriterion(
         status: "要確認",
         source: "要目視確認",
         notes: "",
-        coverageNote: `axe-core は達成基準の一部のみ検証（${ruleIds}）。この pass だけでは適合と判定していません`,
+        pendingNote: `axe-core は達成基準の一部のみ検証（${ruleIds}）。この pass だけでは適合と判定していません`,
       };
     }
     return { status: "適合", source: "自動判定", notes: "" };
@@ -887,8 +889,9 @@ function applyOverrideStatus(
 
   if (!hasEvidence(proposed.evidence)) {
     // 証拠のない「適合」は通さず、現在の判定を維持する。
-    // current をそのまま返すため、axe-core カバレッジ降格の説明（coverageNote）も維持される
+    // current をそのまま返すため、確定していない理由の説明（pendingNote）も維持される
     if (demotesFailure) {
+      // 不適合を覆そうとした試みは矛盾として恒久的に記録する
       return {
         ...current,
         notes: joinNotes(
@@ -898,10 +901,16 @@ function applyOverrideStatus(
         conflict: true,
       };
     }
+    if (current.status === "適合") {
+      // 既に証拠つきで適合になっている。証拠のない同意は何も足さないので記録しない
+      return current;
+    }
+    // 却下の経緯は pendingNote に置く。後段が証拠つきで適合に上げた場合は破棄され、
+    // 「確認OK」の行に「未確認を維持」が残らない
     return {
       ...current,
-      notes: joinNotes(
-        current.notes,
+      pendingNote: joinNotes(
+        current.pendingNote ?? "",
         `${proposed.source}は適合と判定したが、証拠がないため「${getDisplayLabel(current.status)}」を維持`
       ),
     };
@@ -997,11 +1006,11 @@ export function mergeResults(
     }
   }
 
-  // カバレッジ降格の説明は、後段の判定に上書きされずに残った場合だけ備考へ出す。
+  // 「確定していない理由」の説明は、後段の判定に上書きされずに残った場合だけ備考へ出す。
   // 上書きされた場合は applyOverrideStatus が新しい結果を組み立てる際に破棄されている
-  if (result.coverageNote) {
-    const { coverageNote, ...rest } = result;
-    return { ...rest, notes: joinNotes(coverageNote, result.notes) };
+  if (result.pendingNote) {
+    const { pendingNote, ...rest } = result;
+    return { ...rest, notes: joinNotes(pendingNote, result.notes) };
   }
 
   return result;
