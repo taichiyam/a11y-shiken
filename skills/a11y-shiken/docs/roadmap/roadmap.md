@@ -1,20 +1,24 @@
 # アクセシビリティテスト スキル ロードマップ
 
+> このファイルは**未実装の検討項目**を並べたもの。実装済みの内容は [how-it-works.md](../../../../docs/how-it-works.md)（判定の仕組み）と
+> `SKILL.md`（実行ワークフロー）が正本で、両者と矛盾する記述はここに残さない。
+> 実装済みになった項目は「✅ 実装済み」として、実際の実装方式との差分だけを残している。
+
 ## 全体優先順位サマリー
 
 | 優先度 | カテゴリ | 施策 | Claude APIコスト増 | 実装難易度 |
 |--------|---------|------|-------------------|-----------|
 | 🔴 高 | 精度向上 | **B. Computed Styles** によるコントラスト精密計算 | なし | 低 |
-| 🔴 高 | 精度向上 | **C. CSS静的解析**（outline:none / user-scalable等） | なし | 低 |
+| 🟢 低 | 精度向上 | **C. CSS静的解析** — outline:none は Interactive、user-scalable は axe で埋まったため残りは `pointer-events` のみ | なし | 低 |
 | 🔴 高 | ツール統合 | **Lighthouse** アクセシビリティスコア | なし | 低 |
 | 🔴 高 | ツール統合 | **html-validate** マークアップ構造チェック | なし | 低 |
-| 🟡 中 | 精度向上 | **I. agent-browser** アクセシビリティツリー取得（SPA対応・コスト削減） | なし（削減の可能性も） | 中 |
+| ✅ 済 | 精度向上 | ~~**I. agent-browser** アクセシビリティツリー取得（SPA対応・コスト削減）~~ → Playwright `ariaSnapshot()` で実装済み | なし（削減） | — |
 | 🟡 中 | 精度向上 | **D. メディアクエリ** 環境テスト（reduced-motion / HCM） | なし | 中 |
 | 🟡 中 | 精度向上 | **E. ARIA ロールパターン** キーボードイベント検証 | なし | 中 |
 | 🟡 中 | 精度向上 | **A. Claude Vision** 視覚的コントラスト・フォーカス判定 | **あり**（要枚数制限） | 中 |
 | 🟡 中 | ツール統合 | **Pa11y** HTML_CodeSniffer補完 | なし | 低 |
 | 🟡 中 | 設定 | **WCAGレベルプリセット**（`--preset` フラグ） | なし | 中 |
-| 🟡 中 | 設定 | **選択出力フラグ**（`--no-claude-analysis` 等） | なし（削減） | 低 |
+| 🟡 中 | 設定 | **選択出力フラグ**（`--no-claude-analysis` / 非対話実行での形式指定。出力形式の選択自体は `REPORT_FORMAT` で実装済み） | なし（削減） | 低 |
 | 🟢 低 | ツール統合 | **Nu Html Checker (vnu)** W3C公式バリデーター | なし | 中 |
 | 🟢 低 | 精度向上 | **F. IBM Equal Access Checker** ルール補完 | なし | 低 |
 | 🟢 低 | 精度向上 | **H. フォーム詳細検証** エラー関連付け等 | なし | 高 |
@@ -32,7 +36,11 @@
 | axe-core | WCAG機械的違反の検出 | なし |
 | Visual テスト (Playwright) | DOM/レイアウト系の自動判定 | なし |
 | Interactive テスト (Playwright) | キーボード操作・挙動の自動判定 | なし |
-| Claude HTML分析 (WebFetch) | HTMLソースを読んで品質判断 | **あり**（入力トークン中心） |
+| a11y ツリー取得 (Playwright `ariaSnapshot()`) | レンダリング後のアクセシビリティツリーをテキスト化 | なし |
+| Claude 分析 | a11y ツリー（無い場合のみ WebFetch した HTML）を読んで品質判断 | **あり**（入力トークン中心） |
+
+> 判定結果の統合には `axeCoverage` によるカバレッジガード・証拠必須ガード・「適合」への遷移制限が入っている。
+> 詳細は [how-it-works.md](../../../../docs/how-it-works.md) を参照（このロードマップでは扱わない）。
 
 ---
 
@@ -41,6 +49,10 @@
 **効果**: 色コントラスト・フォーカスリング等を実描画で判定。HTML分析では不可能なケースをカバー。
 
 **対象 WCAG**: 1.4.3（透明背景・グラデーション）、1.4.11（ボタン枠線・アイコン）、2.4.7（フォーカスリング視認性）
+
+いずれも「合格を出さない設計」で常に未確認になっている項目と重なる（1.4.11 / 2.4.7 は Visual / Interactive が warning のみを返す）。
+判定できていない領域を埋める施策としては優先度が高いが、**画像から読み取った所見も証拠必須ガードの対象にする**必要がある
+（「見た目では十分に見える」という所見は、引用可能な証拠を伴わない限り「適合」に上げてはならない）。
 
 **Claude API コスト**: **あり（画像トークン = 高コスト）**
 
@@ -84,12 +96,14 @@ const colors = await page.evaluate(() => {
 
 **Claude API コスト**: **なし**
 
-| 検索パターン | 対応 WCAG | 判定内容 |
-|------------|----------|---------|
-| `outline:\s*(none\|0)` | 2.4.7 | フォーカスリング無効化 |
-| `user-scalable=no` | 1.4.4 | viewport ズーム禁止 |
-| `pointer-events:\s*none` | 2.1.1 | インタラクティブ要素の操作無効化 |
-| `animation` / `transition` | 2.3.3 | `prefers-reduced-motion` 未考慮 |
+| 検索パターン | 対応 WCAG | 判定内容 | 現状 |
+|------------|----------|---------|------|
+| `outline:\s*(none\|0)` | 2.4.7 | フォーカスリング無効化 | 実行時判定で代替済み（Interactive `testFocusVisible` がフォーカス前後の computed style 差分で fail 判定。issue #10） |
+| `user-scalable=no` | 1.4.4 | viewport ズーム禁止 | axe `meta-viewport`（`wcag144`）が担当済み |
+| `pointer-events:\s*none` | 2.1.1 | インタラクティブ要素の操作無効化 | 未実装（2.1.1 は axe の3ルールのみで、通しのキーボード検査は存在しない） |
+| `animation` / `transition` | 2.3.3 | `prefers-reduced-motion` 未考慮 | 未実装（2.3.3 は Level AAA のため現在の55項目の対象外。導入するなら 2.2.2 の停止手段判定として設計する） |
+
+上2行は実装済みの経路で埋まったため、CSS静的解析の残る価値は下2行に絞られる。
 
 ```typescript
 const cssText = await page.evaluate(() =>
@@ -156,24 +170,22 @@ bun add accessibility-checker
 
 ---
 
-### I. agent-browser によるアクセシビリティツリー取得
+### I. アクセシビリティツリー取得 ✅ 実装済み
 
-**効果**: 現在 WebFetch + HTML解析でやっている role/name/state の確認を、レンダリング済みアクセシビリティツリーから直接取得できる。**SPA サイトで特に有効**。
+**当初案**: agent-browser（Vercel 製 CLI）の `snapshot` コマンドでアクセシビリティツリーを取得する。
 
-**Claude API コスト**: **なし**（ツリーテキストは HTML全文より小さいため、入力コスト削減の可能性もある）
+**実際の実装**: 外部 CLI を追加せず、既存の Playwright 環境で `page.locator("body").ariaSnapshot()` を使う
+`scripts/a11y-tree.ts` として実装した（SKILL.md ステップ2.9）。出力は agent-browser の `snapshot` と同等の YAML 形式で、
+`{OUTPUT_DIR}/data/{ラベル}/a11y-tree.txt` に保存される。Claude 分析（ステップ5）はこのツリーを第1優先の入力とし、
+ツリーが空・取得失敗の場合のみ WebFetch にフォールバックする。
 
-#### agent-browser とは
+**当初案から変えた理由**: axe-core / Visual / Interactive がすでに Playwright を起動しており、
+同じ `scripts/lib/stable-browser.ts` の決定的な読み込み手順を共有できるため。
+外部 CLI を足すと依存関係と読み込みタイミングの二重管理になる。
 
-Vercel 製の CLI ツール。AIエージェント向けに設計されており、`snapshot` コマンドでページのアクセシビリティツリーを効率的に取得できる。
+**得られた効果**（当初の想定どおり）:
 
-```bash
-npx agent-browser open <URL>
-npx agent-browser snapshot  # アクセシビリティツリーをテキストで出力
-```
-
-#### 現在の HTML分析との比較
-
-| 比較 | 現在（WebFetch + HTML解析） | agent-browser snapshot |
+| 比較 | WebFetch + HTML解析 | `ariaSnapshot()` |
 |------|---------------------------|----------------------|
 | 取得内容 | HTML ソース（静的） | レンダリング済みアクセシビリティツリー（動的） |
 | role/name/state | HTML属性から推測 | ブラウザが計算した実値 |
@@ -181,25 +193,11 @@ npx agent-browser snapshot  # アクセシビリティツリーをテキスト�
 | Claude への入力量 | HTML全文（多い） | ツリーテキスト（少ない＝コスト削減） |
 | aria-hidden の影響 | 検出しにくい | ツリーから除外されるので正確 |
 
-#### Playwright との役割分担
+ツリーで判定する項目（2.4.4 リンクテキスト品質 / 4.1.2 accessible name・aria-hidden / 2.4.1 ランドマーク / 1.3.1 見出し階層）と、
+ツリーに現れないため HTML が必要な項目（lang / 文字画像 / 音声・映像 / アニメーション等）の切り分けは
+SKILL.md ステップ5 と [how-it-works.md](../../../../docs/how-it-works.md) 第4章に記載済み。
 
-- **Playwright スクリプト（axe-core / Visual / Interactive）** はすでに `scripts/lib/stable-browser.ts` の決定的読み込み手順（load 待ち + networkidle best-effort + lazy-load 発火）でSPA対応済み → 代替不要
-- **agent-browser が代替できるのは WebFetch（Claude HTML分析）のみ**
-- viewport変更・JS評価・CSS計算・raw keyboard操作 は Playwright が必要
-
-#### a11y判定への応用
-
-- **リンクテキストの品質（2.4.4）**: ツリー上の accessible name を直接確認
-- **accessible name（4.1.2）**: `aria-label` / `aria-labelledby` の解決済み値
-- **aria-hidden による誤った隠蔽**: ツリーから要素が消えているかで検出
-- **ランドマーク構造（2.4.1）**: `role=main/nav/banner/contentinfo` の存在を直接確認
-- **見出し階層（1.3.1）**: ツリー上の heading level を順番通りに取得
-
-```bash
-npx agent-browser open {URL}
-npx agent-browser snapshot > {OUTPUT_DIR}/data/a11y-tree.txt
-# → Claude に渡す入力を HTML全文からツリーテキストに切り替え
-```
+**残っている課題**: viewport変更・JS評価・CSS計算・raw keyboard操作は引き続き Playwright スクリプト側が担当する（ツリーでは代替できない）。
 
 ---
 
@@ -223,12 +221,15 @@ bunx lighthouse <URL> \
 
 | 監査項目 | axe-coreとの重複 | 補完価値 |
 |---------|----------------|---------|
-| `accesskeys` | なし | accesskey の重複検出 |
-| `tap-targets` | なし | タップターゲットサイズ（モバイル） |
-| `meta-viewport` | なし | `user-scalable=no` 検出（1.4.4） |
+| `accesskeys` | axe の `accesskeys` は best-practice タグのため、本ツールのWCAGタグ実行では発火しない | accesskey の重複検出 |
+| `tap-targets` | **あり**（axe `target-size` / Visual `checkTargetSize`） | モバイル実機基準でのタップターゲット判定 |
+| `meta-viewport` | **あり**（axe に同名ルールが存在し `wcag144` タグで実行される。ng/contact.html の実測でも violation として発火） | なし（重複） |
 | スコア | **独自** | 0〜100の総合スコア |
 
 レポートのサマリーに「Lighthouse スコア: XX/100」を追記するだけで付加価値あり。
+
+**導入時の注意**: Lighthouse の内部エンジンは axe-core であり、多くの監査項目は本ツールの axe-core 実行と重複する。
+統合するなら「スコア」と「axe-core にない独自監査」に絞り、重複分を二重に判定へ流し込まないこと。
 
 ---
 
@@ -292,19 +293,22 @@ curl -s -H "Content-Type: text/html; charset=utf-8" \
 axe-core          → WCAG機械的違反
 Visual テスト      → DOM/レイアウト系
 Interactive テスト → キーボード・挙動系
-Claude HTML分析   → 品質判断が必要な項目
+a11y ツリー取得    → ariaSnapshot()（Claude 分析の第1入力）
+Claude 分析        → 品質判断が必要な項目（ツリー優先・WebFetch フォールバック）
 
 【追加後】
-Lighthouse        → スコア + tap-targets + meta-viewport
+Lighthouse        → スコア（重複しない独自監査のみ）
 html-validate     → マークアップ構造エラー
 Pa11y             → HTML_CodeSniffer補完
-agent-browser     → アクセシビリティツリー（Claude HTML分析の強化）
 ```
 
-判定優先順位:
+判定優先順位（現在は `Interactive > Visual > Claude判定 > axe-core`。追加後の想定）:
 ```
 Interactive > Visual > Lighthouse > html-validate > Pa11y > Claude判定 > axe-core
 ```
+
+> 追加ツールを統合する際は、既存の3つのガード（`axeCoverage` カバレッジガード / 証拠必須ガード /
+> 「適合」への遷移制限）にどう乗せるかを先に決めること。**証拠のない pass を「適合」に通す経路を新たに作らない。**
 
 ---
 
@@ -331,19 +335,20 @@ Interactive > Visual > Lighthouse > html-validate > Pa11y > Claude判定 > axe-c
 
 ### 選択出力フラグ（`--no-*` フラグ）
 
-Claude HTML分析が最もAPIコストが高いため、用途に応じて出力物を省略できるとよい。
+Claude 分析が最もAPIコストが高いため、用途に応じて出力物を省略できるとよい。
 
-```bash
-/accessibility-test https://example.com --no-claude-analysis
-/accessibility-test https://example.com --no-markdown
-```
+**出力形式の選択は実装済み**（ステップ1.5 の AskUserQuestion → `REPORT_FORMAT`）。
+フラグではなく対話で選ぶ形になっており、`--no-markdown` / `--no-excel` に相当する制御は既にできる。
 
-| フラグ | コスト削減効果 | 影響 |
-|-------|-------------|------|
-| `--no-claude-analysis` | **大**（HTML入力トークンが大きい） | 未確認項目が増える |
-| `--no-markdown` | 中（統合Markdownレポートをスキップ） | `report/markdown/` が生成されない |
-| `--no-excel` | なし（ローカル処理） | Excelが不要な場合のみ |
-| `--no-index` | 軽微 | `index.md` が生成されない |
+| フラグ案 | 状態 | コスト削減効果 | 影響 |
+|-------|------|-------------|------|
+| `--no-claude-analysis` | 未実装 | **大**（ツリー/HTML の入力トークンが大きい） | 未確認項目が増える |
+| `--no-markdown` | ✅ `REPORT_FORMAT: excel` で実現済み | 中（統合Markdownレポートをスキップ） | `markdown/{ラベル}.md` / `_index.md` / `index.md` / `index.html` が生成されない |
+| `--no-excel` | ✅ `REPORT_FORMAT: markdown` で実現済み | なし（ローカル処理） | Excelが不要な場合のみ |
+| `--no-index` | 未実装 | 軽微 | `index.md` が生成されない |
+
+**残る検討点**: 非対話実行（CI 等）では AskUserQuestion が使えないため、`REPORT_FORMAT` を引数で渡せる手段は別途必要。
+なお `merged-result.json` は Single Source of Truth かつ基本17項目ビューの入力のため、どの形式でも省略できない。
 
 ---
 
@@ -354,8 +359,13 @@ Claude HTML分析が最もAPIコストが高いため、用途に応じて出力
 - `gog` CLI の導入・認証セットアップが前提となる
 - スプレッドシートの列構成がプロジェクトにより異なり、汎用的な書き込みロジックの整備が必要
 - エラーハンドリング（認証切れ、シート不存在等）の強化が必要
+- 手順が Claude の手作業（Read → 行の対応付け → `gog sheets update`）で、スクリプト化されていない
+
+書き込み元は `merged-result.json` に統一済み（`references/google-sheets.md`）。
+Excel / Markdown と同じ Single Source of Truth を使うため、シート書き込み側で判定を再解釈することはない。
 
 **公開に向けて必要な対応:**
 1. `gog` CLI のセットアップガイド作成
 2. スプレッドシートのテンプレート提供（列構成の標準化）
 3. ドライラン（`--dry-run`）モードの追加（書き込み前の確認）
+4. `merged-result.json` → シート行のマッピングをスクリプト化し、手作業による転記ミスをなくす

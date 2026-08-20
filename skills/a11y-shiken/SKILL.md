@@ -247,7 +247,7 @@ Playwright の `page.locator("body").ariaSnapshot()` を使って、**JS実行�
 
 ```bash
 cd <skill_dir> && bun scripts/a11y-tree.ts <URL> \
-  --output {OUTPUT_DIR}/data/a11y-tree.txt
+  --output {OUTPUT_DIR}/data/{ラベル}/a11y-tree.txt
 ```
 
 **SPA サイトでの優位性**: `scripts/lib/stable-browser.ts` の決定的な読み込み手順（load 待ち → networkidle best-effort → 全ページスクロール → フォント待ち）で JS 実行後を待機するため、React/Vue 等の SPA でも正しくレンダリングされた後のツリーを取得できる。WebFetch では JS 実行前の静的 HTML しか取れないケースをカバー。
@@ -624,7 +624,13 @@ cp <skill_dir>/references/index-html-template.html {OUTPUT_DIR}/report/index.htm
 
 ### ステップ6: 完了通知
 
-全ファイルの生成が完了したら、ユーザーに以下のディレクトリ構成と通知を行う。`--report` オプションに応じて、生成されなかったファイルはディレクトリ構成から省略する。
+全ファイルの生成が完了したら、ユーザーに以下のディレクトリ構成と通知を行う。ステップ1.5 で選択された `REPORT_FORMAT`（`excel` / `markdown` / `both`）に応じて、生成されなかったファイルはディレクトリ構成から省略する。
+
+| `REPORT_FORMAT` | 生成されないもの |
+|---|---|
+| `excel` | `markdown/{ラベル}.md`・`markdown/_index.md`（ステップ5.7）、`index.md`・`index.html`（ステップ5.9） |
+| `markdown` | `a11y-checklist-*.xlsx`（ステップ5.5） |
+| `both` | なし |
 
 #### 生成されるファイル構成（単一URL・複数URL 共通）
 
@@ -636,18 +642,25 @@ cp <skill_dir>/references/index-html-template.html {OUTPUT_DIR}/report/index.htm
 │   ├── markdown/
 │   │   ├── _index.md                                    ← 概要 + ページ別サマリー
 │   │   ├── {ラベル}.md                                   ← 統合レポート（ページごと）
+│   │   ├── {ラベル}-baseline-17.md                       ← 基本17項目ビュー（デジタル庁）
 │   │   └── ...
 │   └── a11y-checklist-{サイト名}-{YYYY-MM-DD}.xlsx       ← Excel チェックシート
 └── data/                                                 ← 作業データ
     ├── manifest.json
     ├── {ラベル}/
-    │   ├── axe-result.json
-    │   ├── visual-result.json
-    │   ├── interactive-result.json
-    │   ├── claude-overrides.json
+    │   ├── axe-result.json                              ← ステップ2（axe-core）
+    │   ├── visual-result.json                           ← ステップ2.5（Visual）
+    │   ├── interactive-result.json                      ← ステップ2.7（Interactive）
+    │   ├── a11y-tree.txt                                ← ステップ2.9（アクセシビリティツリー）
+    │   ├── claude-overrides.json                        ← ステップ5（Claude 判定）
+    │   ├── merged-result.json                           ← ステップ5.5（55項目の最終判定 / Single Source of Truth）
+    │   ├── baseline-17.json                             ← ステップ5.5b（基本17項目への集約結果）
     │   └── screenshots/
     └── ...
 ```
+
+> `merged-result.json` は `REPORT_FORMAT` に関わらず必ず生成される（Markdownレポート・基本17項目ビューの入力となるため）。
+> `{ラベル}-baseline-17.md` は `REPORT_FORMAT` が `excel` の場合も `report/markdown/` に生成される。
 
 保存後、ユーザーに以下を通知する:
 - 出力ディレクトリのパス
