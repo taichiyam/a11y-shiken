@@ -23,7 +23,7 @@
 > `css-orientation-lock`（1.3.4、experimental）は実行されない**（結果の inapplicable にも現れない）。
 > この2基準に axe-core の検査は効いていない。
 > なお `enabled: false` 自体は実行されない理由にならない（例: `target-size` は `enabled: false` だが
-> 両タグを持たないため実行され `passes` に現れる）。
+> 両タグを持たないため実行される。実測では `passes` に現れた）。
 
 ---
 
