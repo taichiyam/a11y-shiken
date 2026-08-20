@@ -11,14 +11,19 @@
 > 表示された結果を額面どおり受け取る前に必ず確認すること。
 >
 > ⚠️ **👁 の項目でも、axe-core のルールが該当すると「確認OK」になることがあります。**
-> 統合は WCAG タグ単位で axe-core の結果を引き当てるため、その基準に紐づくルールが1つでも
-> `passes` に入れば「適合」になる。詳細はリポジトリの `docs/how-it-works.md`（https://github.com/taichiyam/a11y-shiken ）の「既知の限界」を参照。
+> 統合は WCAG タグ単位で axe-core の結果を引き当て、同じタグの `violations`（不適合）→ `incomplete`（要確認）
+> → `passes`（適合）の順で評価する。つまり **同じタグに violations も incomplete も無く、passes に1つでも
+> 入っていれば「適合」になる**。詳細はリポジトリの `docs/how-it-works.md`（https://github.com/taichiyam/a11y-shiken ）の「既知の限界」を参照。
 
 > axe-core のルール名は **axe-core 4.11.1** で実際に実行して確認したもの。
 > 検査は WCAG タグ（wcag2a / wcag2aa / wcag21a / wcag21aa / wcag22a / wcag22aa）のみで実行するため、
 > `region` / `landmark-one-main` / `heading-order` / `empty-heading` 等の best-practice ルールは発火しない。
-> また、WCAG タグを持っていても **`audio-caption`（1.2.1）と `css-orientation-lock`（1.3.4）は実行されない**
-> （結果の inapplicable にも現れない）。この2基準に axe-core の検査は効いていない。
+> また、axe-core はタグ指定実行のとき既定で `experimental` / `deprecated` タグを持つルールを除外する
+> （`tagExclude`）。このため WCAG タグを持っていても **`audio-caption`（1.2.1、deprecated）と
+> `css-orientation-lock`（1.3.4、experimental）は実行されない**（結果の inapplicable にも現れない）。
+> この2基準に axe-core の検査は効いていない。
+> なお `enabled: false` 自体は実行されない理由にならない（例: `target-size` は `enabled: false` だが
+> 両タグを持たないため実行され `passes` に現れる）。
 
 ---
 
