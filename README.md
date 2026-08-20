@@ -19,8 +19,9 @@ URL を渡すと、[axe-core](https://github.com/dequelabs/axe-core) と Playwri
 **English**: a11y-shiken is a Claude Code skill that audits a web page against WCAG 2.2 Level A + AA (55 success criteria)
 with axe-core, Playwright, and an LLM, then rolls the results up into the 17 baseline items of the Japanese Digital Agency's
 web accessibility guidebook, emitting an Excel checklist and Markdown reports (Japanese output only).
-Its governing rule is that a false pass is far worse than a false failure: an LLM verdict that cannot quote evidence from the
-rendered accessibility tree or HTML is demoted to "unverified" by the merge script rather than by prompt instruction,
+Its governing rule is that a false pass is far worse than a false failure: an LLM verdict that provides no evidence text
+is demoted to "unverified" by the merge script rather than by prompt instruction (the script checks that evidence is present,
+not that it is genuine — a fabricated quote would still pass this gate),
 an axe-core pass on a criterion its rules only partially cover is recorded as unverified instead of as conformance,
 and a baseline item is never rounded up to "OK" while any of its criteria remain unverified. It reports; it does not auto-fix.
 
@@ -89,7 +90,9 @@ WCAG 2.2 の 55 項目を渡されても、どれが致命的でどれが後回�
 |---|---|
 | 対応する達成基準に 1 つでも「不適合」がある | ❌ 要修正 |
 | 不適合はないが「未確認」が残っている | ⚠️ **一部未確認** |
-| 対応する達成基準がすべて「適合」 | ✅ 確認OK |
+| 対応する判定対象内の達成基準がすべて「適合」 | ✅ 確認OK |
+
+（2.4.10（Level AAA）と 4.1.1（WCAG 2.2 で廃止）は判定対象外として集約から除外されます）
 
 項目6「キーボードだけで全機能にアクセスできる」は 5 つの達成基準に対応します。
 **3 基準が適合でも、2 基準が目視未確認なら「⚠️ 一部未確認」と表示します。** 多数決や平均で「確認OK」に寄せることはしません。
@@ -106,10 +109,10 @@ WCAG 2.2 の 55 項目を渡されても、どれが致命的でどれが後回�
 
 | 指標 | この盲検プロトコルでの実測値 |
 |---|---|
-| 既知の仕込み違反を「合格」にした数 | **0 件 / 8 件**（危険側に倒れる機会があったのは 8 件。残り **13 件 / 21 は判定自体が出ていない**） |
-| 生成 AI が判定を試みた範囲 | 55 項目中 **15 〜 16 項目** |
+| 既知の仕込み違反を「合格」にした数 | **0 件 / 8 件**（3 セッションとも同じ 8 件が対象。危険側に倒れる機会があったのはこの 8 件で、残り **13 件 / 21 は判定自体が出ていない**） |
+| 生成 AI が判定を試みた範囲 | 55 項目中 **15 〜 16 項目**（各セッション・1 ページあたり） |
 | 検出 | 判定を試みた **8 件は 3 セッションとも不適合**。正解の違反にあたるセルは 3 体が **100% 一致** |
-| 証拠の幻覚（実在しない要素の引用） | **0 件 / 173 判定** |
+| 証拠の幻覚（実在しない要素の引用） | **0 件 / 173 判定**（3 セッション合計） |
 
 **「間違えない」のは「判定できることしか判定しない」ことの裏返しです。**
 正解の違反 21 件のうち 13 件は、そもそも判定の対象になりませんでした。
