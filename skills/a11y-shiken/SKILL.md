@@ -321,11 +321,13 @@ axe-coreで「未確認」となった項目について、ステップ2.9で取
 2. 以下の観点で分析する（ツリー／HTML どちらを使う場合も同じ観点）:
 
    **ツリーで直接判定できる項目（a11y-tree.txt 使用時に精度向上）:**
-   - リンクテキストの品質（2.4.4）: ツリー上の accessible name を直接確認（aria-label の解決済み値）
-   - ランドマーク要素の有無（2.4.1）: `[banner]` `[main]` `[navigation]` `[contentinfo]` の存在
-   - 見出し階層の品質（1.3.1）: ツリー上の heading level を順番通りに確認
+   > ツリーは `ariaSnapshot()` の YAML 形式で、各行は `- role "accessible name"` の形をとる（例: `- link "本文へスキップ":`、`- banner:`、`- textbox "お名前（必須）"`）。末尾のコロンは子要素がある場合だけ付く。**判定・evidence には必ずツリーに実在するこの表記を使い、`[banner]` のような独自表記を書かない。**
+
+   - リンクテキストの品質（2.4.4）: `- link "..."` の引用符内（accessible name。`aria-label` は解決済みの値）を直接確認
+   - ランドマーク要素の有無（2.4.1）: `- banner` / `- main` / `- navigation` / `- contentinfo` で始まる行の存在（名前付きの場合は `- navigation "グローバルナビ":`）
+   - 見出し階層の品質（1.3.1）: `- heading "..." [level=N]` の `[level=N]` を出現順に確認
    - aria-hidden による誤った隠蔽（4.1.2）: ツリーから要素が欠落しているかで検出
-   - フォーム要素の accessible name（1.3.1 / 4.1.2）: ツリー上の name 属性
+   - フォーム要素の accessible name（1.3.1 / 4.1.2）: `- textbox "お名前（必須）"` のように、role に続く引用符内が accessible name。引用符が無い（`- textbox`）＝名前なし
 
    **ツリーに現れないため WebFetch / HTML で判定する項目:**
    - lang 属性の設定（3.1.1 / 3.1.2）: `<head>` の lang 属性
@@ -420,6 +422,7 @@ Interactive テスト結果 > Visual テスト結果 > Claude判定 > axe-core
 - `not-applicable` は `pass`（確認OK）として扱う
 - axe-coreの1ルールが複数WCAG基準にマッピングされる場合、すべての基準に反映
 - violations が1つでもあれば passes より優先
+- **axe-core カバレッジガード**: 55項目の定義が持つ `axeCoverage` が `partial`（axe-core のルール群が達成基準の一部しか検証していない）の項目では、`passes` に一致しても「適合」にせず「要確認（未確認）」に倒し、備考に「axe-core は達成基準の一部のみ検証（{ルール名}）」と記録する。`full` は 1.4.3 のみ。`violations`（不適合）・`incomplete`（要確認）の扱いは変わらず、Visual / Interactive / Claude が証拠つきで pass を出した場合は従来どおり「適合」になる
 - **証拠必須ガード**: `evidence` が空・欠落の Claude 判定（pass / fail / not-applicable）は warning に強制降格し、降格をログと備考に記録する
 - **遷移ルール（安全側への遷移は自由、危険側への遷移は制限）**:
   - 適合 → 不適合 の上書きは無条件で許可

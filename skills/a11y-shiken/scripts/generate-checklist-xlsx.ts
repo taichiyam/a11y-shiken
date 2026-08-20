@@ -202,8 +202,21 @@ export interface WcagCriterion {
   level: "A" | "AA";
   description: string; // 確認内容
   axeTags: string[]; // マッチ対象の axe-core タグ (e.g. ["wcag111"])
+  // axe-core のルール群が、この達成基準の要求をどこまでカバーしているか。
+  // - "full":    ルール群が達成基準の要求をほぼ満たして検証している。pass → 適合
+  // - "partial": 達成基準の一部の条件しか見ていない（特定要素の有無だけ、値の妥当性だけ 等）。
+  //              または axe-core に実質的なルールが無い。pass → 要確認（未確認表示）に倒す
+  // 「間違った合格は、間違った不合格よりはるかに悪い」ため、判断に迷う場合は "partial" を選ぶ。
+  // なお pass の扱いを変えるだけで、violations（不適合）・incomplete（要確認）の扱いは変えない。
+  // Visual / Interactive / 生成AI が証拠つきで pass を出した場合は従来どおり「適合」になる。
+  axeCoverage: AxeCoverage;
 }
 
+export type AxeCoverage = "full" | "partial";
+
+// axeCoverage の判定根拠は docs/how-it-works.md 第5章「各基準が何を検証し、何を検証していないか」に
+// 55 項目ぶんまとめてある。"full" は 1.4.3（color-contrast がコントラスト比そのものを計測し、
+// 計測できない場合は axe 側が incomplete に倒す）のみで、残る 54 項目は "partial"。
 const WCAG_CRITERIA: WcagCriterion[] = [
   // --- 1. 知覚可能 (Perceivable) ---
   {
@@ -214,6 +227,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "img要素のalt属性の有無、alt値が適切か、装飾画像にalt=\"\"が設定されているか",
     axeTags: ["wcag111"],
+    axeCoverage: "partial",
   },
   {
     id: "1.2.1",
@@ -223,6 +237,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "音声のみ/映像のみのコンテンツに代替テキストまたは代替メディアが提供されているか",
     axeTags: ["wcag121"],
+    axeCoverage: "partial",
   },
   {
     id: "1.2.2",
@@ -231,6 +246,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     level: "A",
     description: "収録済み映像に正確なキャプション（字幕）が付与されているか",
     axeTags: ["wcag122"],
+    axeCoverage: "partial",
   },
   {
     id: "1.2.3",
@@ -240,6 +256,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "映像コンテンツに音声解説またはテキストによる代替が提供されているか",
     axeTags: ["wcag123"],
+    axeCoverage: "partial",
   },
   {
     id: "1.2.4",
@@ -248,6 +265,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     level: "AA",
     description: "ライブ映像にリアルタイムのキャプションが提供されているか",
     axeTags: ["wcag124"],
+    axeCoverage: "partial",
   },
   {
     id: "1.2.5",
@@ -256,6 +274,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     level: "AA",
     description: "収録済み映像に音声解説が提供されているか",
     axeTags: ["wcag125"],
+    axeCoverage: "partial",
   },
   {
     id: "1.3.1",
@@ -265,6 +284,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "見出し構造（h1-h6）の妥当性、フォーム要素のラベル紐付け、テーブルのth/caption",
     axeTags: ["wcag131"],
+    axeCoverage: "partial",
   },
   {
     id: "1.3.2",
@@ -274,6 +294,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "DOMの順序が視覚的な表示順序と一致しているか。CSSで位置変更した場合に読み上げ順序が意味を保つか",
     axeTags: ["wcag132"],
+    axeCoverage: "partial",
   },
   {
     id: "1.3.3",
@@ -283,6 +304,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "色・形・位置のみで情報を伝えていないか（例：「赤いボタンを押してください」）",
     axeTags: ["wcag133"],
+    axeCoverage: "partial",
   },
   {
     id: "1.3.4",
@@ -292,6 +314,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "コンテンツが縦向き・横向きの両方で閲覧可能か。特定の向きに固定されていないか",
     axeTags: ["wcag134"],
+    axeCoverage: "partial",
   },
   {
     id: "1.3.5",
@@ -301,6 +324,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "フォーム要素に適切なautocomplete属性が設定されているか",
     axeTags: ["wcag135"],
+    axeCoverage: "partial",
   },
   {
     id: "1.4.1",
@@ -310,6 +334,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "色だけで情報を伝えていないか。色以外の手がかり（テキスト、アイコン、下線等）があるか",
     axeTags: ["wcag141"],
+    axeCoverage: "partial",
   },
   {
     id: "1.4.2",
@@ -319,6 +344,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "自動再生される音声が3秒以上の場合、一時停止/停止/音量調整の手段があるか",
     axeTags: ["wcag142"],
+    axeCoverage: "partial",
   },
   {
     id: "1.4.3",
@@ -328,6 +354,10 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "テキストと背景のコントラスト比が4.5:1以上（大文字テキストは3:1以上）",
     axeTags: ["wcag143"],
+    // color-contrast は達成基準の要求そのもの（コントラスト比）を計測する。
+    // 背景画像・グラデーション等で計測できない場合は axe-core 側が incomplete に倒すため、
+    // pass は「計測して基準を満たした」ことを意味する
+    axeCoverage: "full",
   },
   {
     id: "1.4.4",
@@ -337,6 +367,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "テキストを200%まで拡大しても、コンテンツや機能が損なわれないか",
     axeTags: ["wcag144"],
+    axeCoverage: "partial",
   },
   {
     id: "1.4.5",
@@ -346,6 +377,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "テキストの代わりに画像化された文字を使用していないか（ロゴ等の例外を除く）",
     axeTags: ["wcag145"],
+    axeCoverage: "partial",
   },
   {
     id: "1.4.10",
@@ -355,6 +387,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "幅320px（400%ズーム）まで縮小しても横スクロールなしでコンテンツが閲覧可能か",
     axeTags: ["wcag1410"],
+    axeCoverage: "partial",
   },
   {
     id: "1.4.11",
@@ -364,6 +397,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "UIコンポーネントやグラフィックのコントラスト比が3:1以上か",
     axeTags: ["wcag1411"],
+    axeCoverage: "partial",
   },
   {
     id: "1.4.12",
@@ -373,6 +407,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "行の高さ1.5倍、段落間隔2倍、文字間隔0.12倍、単語間隔0.16倍に変更しても内容が損なわれないか",
     axeTags: ["wcag1412"],
+    axeCoverage: "partial",
   },
   {
     id: "1.4.13",
@@ -382,6 +417,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "ホバー/フォーカスで表示されるコンテンツが、解除可能・ホバー維持可能・自動非表示しないか",
     axeTags: ["wcag1413"],
+    axeCoverage: "partial",
   },
 
   // --- 2. 操作可能 (Operable) ---
@@ -393,6 +429,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "すべての機能がキーボードだけで操作可能か。Tab/Enter/Space/矢印キーで全要素にアクセスできるか",
     axeTags: ["wcag211"],
+    axeCoverage: "partial",
   },
   {
     id: "2.1.2",
@@ -402,6 +439,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "キーボード操作でフォーカスが特定の要素に閉じ込められないか",
     axeTags: ["wcag212"],
+    axeCoverage: "partial",
   },
   {
     id: "2.1.4",
@@ -411,6 +449,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "文字キー単独のショートカットがある場合、無効化/再設定/フォーカス時のみ有効にする手段があるか",
     axeTags: ["wcag214"],
+    axeCoverage: "partial",
   },
   {
     id: "2.2.1",
@@ -420,6 +459,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "制限時間のあるコンテンツで、延長/解除/事前通知の手段があるか",
     axeTags: ["wcag221"],
+    axeCoverage: "partial",
   },
   {
     id: "2.2.2",
@@ -429,6 +469,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "自動的に動く/スクロールする/点滅するコンテンツに一時停止/停止の手段があるか",
     axeTags: ["wcag222"],
+    axeCoverage: "partial",
   },
   {
     id: "2.3.1",
@@ -437,6 +478,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     level: "A",
     description: "1秒間に3回以上の閃光を放つコンテンツがないか",
     axeTags: ["wcag231"],
+    axeCoverage: "partial",
   },
   {
     id: "2.4.1",
@@ -446,6 +488,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "ページ上部にスキップリンク、またはランドマーク（main, nav等）が設定されているか",
     axeTags: ["wcag241"],
+    axeCoverage: "partial",
   },
   {
     id: "2.4.2",
@@ -455,6 +498,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "title要素が存在し、ページ内容を適切に説明しているか",
     axeTags: ["wcag242"],
+    axeCoverage: "partial",
   },
   {
     id: "2.4.3",
@@ -464,6 +508,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "Tabキーでのフォーカス移動順序が論理的で意味のある順序になっているか",
     axeTags: ["wcag243"],
+    axeCoverage: "partial",
   },
   {
     id: "2.4.4",
@@ -473,6 +518,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "リンクテキストが単体またはコンテキスト内でリンク先を理解できるか",
     axeTags: ["wcag244"],
+    axeCoverage: "partial",
   },
   {
     id: "2.4.5",
@@ -482,6 +528,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "ページへの到達手段が2つ以上あるか（ナビゲーション、サイトマップ、検索等）",
     axeTags: ["wcag245"],
+    axeCoverage: "partial",
   },
   {
     id: "2.4.6",
@@ -490,6 +537,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     level: "AA",
     description: "見出し・ラベルが内容を適切に説明しているか",
     axeTags: ["wcag246"],
+    axeCoverage: "partial",
   },
   {
     id: "2.4.7",
@@ -499,6 +547,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "キーボードフォーカスが視覚的に確認できるか。outline: noneでフォーカスインジケーターが消されていないか",
     axeTags: ["wcag247"],
+    axeCoverage: "partial",
   },
   {
     id: "2.4.11",
@@ -508,6 +557,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "フォーカスされた要素がposition:fixed/sticky等の要素で完全に隠れないか",
     axeTags: ["wcag2411"],
+    axeCoverage: "partial",
   },
   {
     id: "2.5.1",
@@ -517,6 +567,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "マルチタッチやパス依存のジェスチャが必要な機能に、シングルポインタの代替手段があるか",
     axeTags: ["wcag251"],
+    axeCoverage: "partial",
   },
   {
     id: "2.5.2",
@@ -526,6 +577,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "mousedown/touchstartだけで機能が実行されず、キャンセル手段があるか",
     axeTags: ["wcag252"],
+    axeCoverage: "partial",
   },
   {
     id: "2.5.3",
@@ -535,6 +587,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "視覚的なラベルがアクセシブルネーム（aria-label等）に含まれているか",
     axeTags: ["wcag253"],
+    axeCoverage: "partial",
   },
   {
     id: "2.5.4",
@@ -544,6 +597,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "デバイスの動き（振る、傾ける等）で起動する機能に、UIによる代替手段があるか",
     axeTags: ["wcag254"],
+    axeCoverage: "partial",
   },
 
   {
@@ -554,6 +608,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "ドラッグ操作が必要な機能に、単一ポインタの代替手段があるか",
     axeTags: ["wcag257"],
+    axeCoverage: "partial",
   },
   {
     id: "2.5.8",
@@ -563,6 +618,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "操作要素のターゲットサイズが最低24x24pxあるか（インラインリンク等の例外を除く）",
     axeTags: ["wcag258"],
+    axeCoverage: "partial",
   },
 
   // --- 3. 理解可能 (Understandable) ---
@@ -573,6 +629,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     level: "A",
     description: "html要素にlang属性が正しく設定されているか",
     axeTags: ["wcag311"],
+    axeCoverage: "partial",
   },
   {
     id: "3.1.2",
@@ -582,6 +639,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "ページの主言語と異なる言語の部分にlang属性が設定されているか",
     axeTags: ["wcag312"],
+    axeCoverage: "partial",
   },
   {
     id: "3.2.1",
@@ -591,6 +649,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "フォーカスを受け取っただけでコンテキストの変化（ページ遷移、ポップアップ等）が起きないか",
     axeTags: ["wcag321"],
+    axeCoverage: "partial",
   },
   {
     id: "3.2.2",
@@ -600,6 +659,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "フォーム要素の値を変更しただけで予期しないコンテキストの変化が起きないか",
     axeTags: ["wcag322"],
+    axeCoverage: "partial",
   },
   {
     id: "3.2.3",
@@ -609,6 +669,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "複数ページ間でナビゲーションの順序と構成が一貫しているか",
     axeTags: ["wcag323"],
+    axeCoverage: "partial",
   },
   {
     id: "3.2.4",
@@ -618,6 +679,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "同じ機能を持つコンポーネントが一貫して識別されているか（同じアイコン、ラベルを使用）",
     axeTags: ["wcag324"],
+    axeCoverage: "partial",
   },
   {
     id: "3.2.6",
@@ -627,6 +689,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "ヘルプ手段（連絡先、チャットbot等）が複数ページ間で一貫した相対的な位置にあるか",
     axeTags: ["wcag326"],
+    axeCoverage: "partial",
   },
   {
     id: "3.3.1",
@@ -636,6 +699,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "入力エラーが自動検出された場合、エラー箇所と内容がテキストで説明されているか",
     axeTags: ["wcag331"],
+    axeCoverage: "partial",
   },
   {
     id: "3.3.2",
@@ -645,6 +709,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "フォーム要素にラベルまたは入力説明があるか。label要素の紐付けと説明の適切さ",
     axeTags: ["wcag332"],
+    axeCoverage: "partial",
   },
   {
     id: "3.3.3",
@@ -654,6 +719,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "入力エラーが検出された場合、修正方法の提案が提示されるか",
     axeTags: ["wcag333"],
+    axeCoverage: "partial",
   },
   {
     id: "3.3.4",
@@ -663,6 +729,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "法的/金融的な取引やデータ送信の前に、確認・修正・取消が可能か",
     axeTags: ["wcag334"],
+    axeCoverage: "partial",
   },
 
   {
@@ -673,6 +740,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "同一プロセス内で以前に入力された情報の再入力を求めないか（自動入力、選択肢からの選択等の手段があるか）",
     axeTags: ["wcag337"],
+    axeCoverage: "partial",
   },
   {
     id: "3.3.8",
@@ -682,6 +750,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "認証プロセスが認知機能テスト（パスワード記憶、パズル解読等）のみに依存していないか",
     axeTags: ["wcag338"],
+    axeCoverage: "partial",
   },
 
   // --- 4. 堅牢 (Robust) ---
@@ -693,6 +762,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "カスタムUIコンポーネントに適切なrole、name、stateがARIAで設定されているか",
     axeTags: ["wcag412"],
+    axeCoverage: "partial",
   },
   {
     id: "4.1.3",
@@ -702,6 +772,7 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "成功/エラー/進行状況等のステータスメッセージがrole=\"status\"やaria-liveで支援技術に伝わるか",
     axeTags: ["wcag413"],
+    axeCoverage: "partial",
   },
 ];
 
@@ -725,6 +796,10 @@ export interface CriterionResult {
   notes: string;
   // 前段の「不適合」を後段が「適合」で覆そうとした場合に立つ（上書きの成否を問わない）
   conflict?: boolean;
+  // axeCoverage: "partial" の基準で axe-core の pass を「要確認」に倒したときの説明。
+  // 統合の最後に notes へ合流する。後段の判定（Visual / Interactive / Claude）が
+  // 上書きした場合は破棄され、備考には残らない（適合の行に「適合と判定していません」を残さないため）
+  coverageNote?: string;
 }
 
 function evaluateCriterion(
@@ -753,9 +828,20 @@ function evaluateCriterion(
     return { status: "要確認", source: "要目視確認", notes: summaries };
   }
 
-  // passes にマッチ → 適合
+  // passes にマッチ → 適合（ただし axe-core のカバレッジが部分的な基準では「要確認」に倒す）
   const matchedPasses = data.passes.filter(matchesTags);
   if (matchedPasses.length > 0) {
+    if (criterion.axeCoverage === "partial") {
+      // axe-core のルール群が達成基準の一部しか検証していないため、pass を適合の根拠にできない。
+      // Visual / Interactive / 生成AI が証拠つきで pass を出せば、後段の統合で適合に上がる
+      const ruleIds = matchedPasses.map((p) => p.id).join(", ");
+      return {
+        status: "要確認",
+        source: "要目視確認",
+        notes: "",
+        coverageNote: `axe-core は達成基準の一部のみ検証（${ruleIds}）。この pass だけでは適合と判定していません`,
+      };
+    }
     return { status: "適合", source: "自動判定", notes: "" };
   }
 
@@ -883,6 +969,13 @@ export function mergeResults(
         evidence: check.details,
       });
     }
+  }
+
+  // カバレッジ降格の説明は、後段の判定に上書きされずに残った場合だけ備考へ出す。
+  // 上書きされた場合は applyOverrideStatus が新しい結果を組み立てる際に破棄されている
+  if (result.coverageNote) {
+    const { coverageNote, ...rest } = result;
+    return { ...rest, notes: joinNotes(coverageNote, result.notes) };
   }
 
   return result;

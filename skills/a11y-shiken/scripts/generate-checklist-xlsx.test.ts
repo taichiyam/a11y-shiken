@@ -12,6 +12,7 @@ import {
   type WcagCriterion,
 } from "./generate-checklist-xlsx"
 
+// axe-core が達成基準を十分カバーしている基準（pass → 適合）
 const CRITERION: WcagCriterion = {
   id: "1.1.1",
   name: "非テキストコンテンツ",
@@ -19,6 +20,13 @@ const CRITERION: WcagCriterion = {
   level: "A",
   description: "",
   axeTags: ["wcag111"],
+  axeCoverage: "full",
+}
+
+// axe-core が達成基準の一部しか検証していない基準（pass → 要確認）
+const PARTIAL_CRITERION: WcagCriterion = {
+  ...CRITERION,
+  axeCoverage: "partial",
 }
 
 function rule(tag: string): AxeRule {
@@ -44,6 +52,7 @@ function axeFixture(partial: Partial<AxeResult> = {}): AxeResult {
 
 const axeViolation = () => axeFixture({ violations: [rule("wcag111")] })
 const axePass = () => axeFixture({ passes: [rule("wcag111")] })
+const axeIncomplete = () => axeFixture({ incomplete: [rule("wcag111")] })
 
 function overridesOf(...overrides: Partial<ClaudeOverride>[]): ClaudeOverridesResult {
   return {
@@ -282,6 +291,120 @@ describe("mergeResults（遷移ルール: 不適合→適合の降格ガード�
     )
     expect(result.status).toBe("適合")
     expect(result.conflict).toBe(true)
+  })
+})
+
+describe("mergeResults（axe-core カバレッジガード）", () => {
+  test("[正常] 部分カバー基準で axe-core の pass のみの場合、要確認になり備考にルール名が残ること", () => {
+    const result = mergeResults(PARTIAL_CRITERION, axePass())
+    expect(result.status).toBe("要確認")
+    expect(result.source).toBe("要目視確認")
+    expect(result.notes).toContain("axe-core は達成基準の一部のみ検証")
+    expect(result.notes).toContain("image-alt")
+  })
+
+  test("[正常] 十分カバー基準で axe-core の pass がある場合、適合のままであること", () => {
+    const result = mergeResults(CRITERION, axePass())
+    expect(result.status).toBe("適合")
+    expect(result.source).toBe("自動判定")
+    expect(result.notes).toBe("")
+  })
+
+  test("[異常] 部分カバー基準でも axe-core の violations は不適合のままであること", () => {
+    const result = mergeResults(PARTIAL_CRITERION, axeViolation())
+    expect(result.status).toBe("不適合")
+    expect(result.source).toBe("自動判定")
+    expect(result.notes).toContain("画像に代替テキストがない")
+  })
+
+  test("[正常] 部分カバー基準で axe-core の incomplete がある場合、従来どおり要確認になること", () => {
+    const result = mergeResults(PARTIAL_CRITERION, axeIncomplete())
+    expect(result.status).toBe("要確認")
+    expect(result.notes).toBe("画像に代替テキストがない")
+  })
+
+  test("[正常] 部分カバー基準でも Visual が証拠つき pass を出した場合、適合に上がること", () => {
+    const result = mergeResults(PARTIAL_CRITERION, axePass(), visualOf("pass", "全12要素で確認OK"))
+    expect(result.status).toBe("適合")
+    expect(result.source).toBe("自動判定(Visual)")
+    expect(result.conflict).toBeFalsy()
+    expect(result.notes).toContain("証拠: 全12要素で確認OK")
+    // 確認OK の行の備考に「適合と判定していません」が残らないこと
+    expect(result.notes).not.toContain("axe-core は達成基準の一部のみ検証")
+  })
+
+  test("[正常] 部分カバー基準が後段の fail で不適合になった場合、カバレッジ降格の説明が残らないこと", () => {
+    const result = mergeResults(PARTIAL_CRITERION, axePass(), visualOf("fail", "3件の問題を検出"))
+    expect(result.status).toBe("不適合")
+    expect(result.notes).toBe("3件の問題を検出")
+  })
+
+  test("[正常] 部分カバー基準でも Claude が証拠つき pass を出した場合、適合に上がること", () => {
+    const result = mergeResults(
+      PARTIAL_CRITERION,
+      axePass(),
+      undefined,
+      undefined,
+      overridesOf({ status: "pass", details: "全画像にalt設定済み", evidence: "img[alt='ロゴ']" })
+    )
+    expect(result.status).toBe("適合")
+    expect(result.source).toBe("自動判定(Claude)")
+    expect(result.conflict).toBeFalsy()
+    expect(result.notes).not.toContain("axe-core は達成基準の一部のみ検証")
+  })
+
+  test("[異常] 部分カバー基準で後段が fail を出した場合、不適合になること", () => {
+    const result = mergeResults(
+      PARTIAL_CRITERION,
+      axePass(),
+      undefined,
+      interactiveOf("fail", "キーボードトラップを検出")
+    )
+    expect(result.status).toBe("不適合")
+    expect(result.notes).toContain("キーボードトラップを検出")
+  })
+
+  test("[正常] 部分カバーで要確認に倒れた項目に、Claude の warning の懸念点が引き継がれること", () => {
+    const result = mergeResults(
+      PARTIAL_CRITERION,
+      axePass(),
+      undefined,
+      undefined,
+      overridesOf({ status: "warning", details: "alt値の妥当性は目視確認が必要", evidence: "" })
+    )
+    expect(result.status).toBe("要確認")
+    expect(result.notes).toContain("axe-core は達成基準の一部のみ検証")
+    expect(result.notes).toContain("alt値の妥当性は目視確認が必要")
+  })
+})
+
+describe("buildMergedResult（axe-core カバレッジガードの55項目への反映）", () => {
+  // 1.4.3 は color-contrast がコントラスト比そのものを計測するため "full"、1.1.1 は alt の有無しか
+  // 見ないため "partial"。同じ pass でも表示ラベルが分かれることを 55 項目の定義ごと検証する
+  const axeWithPasses = (): AxeResult => ({
+    url: "https://example.com",
+    timestamp: "2026-08-18T00:00:00.000Z",
+    violations: [],
+    incomplete: [],
+    passes: [
+      { id: "color-contrast", description: "", help: "", tags: ["wcag2aa", "wcag143"] },
+      { id: "image-alt", description: "", help: "", tags: ["wcag2a", "wcag111"] },
+    ],
+  })
+
+  test("[正常] 十分カバー基準（1.4.3）は axe-core の pass だけで確認OKになること", () => {
+    const merged = buildMergedResult("https://example.com", "2026-08-18 00:00", axeWithPasses())
+    const item = merged.items.find((i) => i.criterion === "1.4.3")!
+    expect(item.displayLabel).toBe("確認OK")
+    expect(item.source).toBe("自動判定")
+  })
+
+  test("[正常] 部分カバー基準（1.1.1）は axe-core の pass だけでは未確認になること", () => {
+    const merged = buildMergedResult("https://example.com", "2026-08-18 00:00", axeWithPasses())
+    const item = merged.items.find((i) => i.criterion === "1.1.1")!
+    expect(item.displayLabel).toBe("未確認")
+    expect(item.status).toBe("要確認")
+    expect(item.notes).toContain("image-alt")
   })
 })
 
