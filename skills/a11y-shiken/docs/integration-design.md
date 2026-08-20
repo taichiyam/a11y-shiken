@@ -1,401 +1,102 @@
-# アクセシビリティテスト結果統合の設計ドキュメント
+# 検査結果の統合方式に関する設計判断の記録
 
-## 概要
-
-accessibility-test スキルは、3つの異なるテストツールで WCAG 2.2 Level AA の達成基準を検証します：
-
-1. **axe-core テスト** (`a11y-test.ts`) - DOM構造の静的解析
-2. **Visual テスト** (`a11y-visual-test.ts`) - Playwright による視覚的・構造的検証
-3. **Interactive テスト** (`a11y-interactive-test.ts`) - Playwright によるインタラクティブ検証
-
-これらの結果を統合して、最終的なアクセシビリティレポートを生成する必要があります。
+> **このドキュメントの役割**
+>
+> 「4 つの検査結果をどう統合するか」を決めたときの記録（ADR 相当）です。**採った案・却下した案・その理由**を残すことだけを目的にしています。
+>
+> **現在の動作仕様は [how-it-works.md](../../../docs/how-it-works.md) を正とします。** 判定ロジック・ガード・遷移ルールの詳細は同ドキュメントの第 2 章・第 3 章にあり、ここでは重複させません。この文書と how-it-works.md の記述が食い違った場合は、how-it-works.md と実装が正です。
 
 ---
 
-## 現在の実装（この節が正）
+## 決定
 
-**採用したのは後述のオプションB（スクリプトによる決定的な統合）です。** 生成 AI 判定を 4 つ目のソースとして加えたうえで、`scripts/generate-checklist-xlsx.ts` が 55 項目の最終判定を機械的に決定し、`merged-result.json` と Excel を出力します。Markdown レポートも `merged-result.json` を表示形式に変換したもので、Claude が判定を組み立て直すことはありません。
+**スクリプトによる決定的な統合（後述のオプションB）を採用する。**
 
-- 実体は `integrate-results.ts` ではなく **`generate-checklist-xlsx.ts`**（Excel 生成と統合を兼ねる）
-- axe-core の引き当ては**ルールIDのマッピング表ではなく WCAG タグ**（`wcag111` 等）で行う。1 ルールが複数タグを持つ場合は該当するすべての基準に反映される
-- 17項目ビューは `generate-baseline-view.ts` が `merged-result.json` から生成する
+- 統合の実体は `scripts/generate-checklist-xlsx.ts`。WCAG 2.2 Level A+AA の 55 項目について最終判定を機械的に決め、`merged-result.json`（唯一の正）と Excel を出力する
+- デジタル庁『ウェブアクセシビリティ導入ガイドブック』の基本 17 項目ビューは `scripts/generate-baseline-view.ts` が `merged-result.json` から生成する
+- Markdown レポートも `merged-result.json` を表示形式に変換したもので、Claude が判定を組み立て直すことはない（`SKILL.md` ステップ5.7）
+- 生成 AI（Claude）は統合する側ではなく、axe-core / Visual 検査 / Interactive 検査と並ぶ **4 つ目の判定ソース**として関与する
 
-**重ねる順**: axe-core（土台） → Claude 判定 → Visual → Interactive（最優先）
+統合の入力は 4 ソース、重ねる順は `axe-core（土台） → 生成AI判定 → Visual → Interactive（最優先）`。個々のルールは [how-it-works.md 第3章](../../../docs/how-it-works.md) を参照。
 
-**判定ロジック（実装済み）**:
+## この方式を採る理由
 
-1. axe-core の violations に一致 → **修正あり**（担当: 自動判定）
-2. axe-core の incomplete に一致 → **未確認**（担当: 要目視確認）
-3. axe-core の passes に一致 → その基準の `axeCoverage` が `"full"` なら **確認OK**（担当: 自動判定）、`"partial"`（達成基準の一部しか検証していない）なら **未確認**（担当: 要目視確認、issue #31）。**現時点で `"full"` は0件なので、実際には常に未確認になる**
-4. いずれにも一致しない → **未確認**（担当: 要目視確認）
-5. Claude / Visual / Interactive の pass → **確認OK**、fail → **修正あり**（担当: それぞれの判定ソース）
-6. Claude / Visual / Interactive の **warning は判定を上書きしない**（下位の判定を維持する）。備考へ懸念点を引き継ぐのは **Claude の warning だけ**で、Visual / Interactive の warning は `details` ごと捨てられる（内容は `visual-result.json` / `interactive-result.json` を参照）
-7. Claude の `not-applicable`（該当コンテンツなし）は pass と同じく **確認OK** として扱う
+1. **判定を決定的にするため。** 同じ入力（同じ JSON）に対して常に同じ 55 項目の判定を返す必要がある。統合ロジックが自然言語の指示だと、これは保証できない
+2. **ガードを指示ではなくコードで担保するため。** 「証拠のない合格を通さない」「達成基準の一部しか検証していない pass を適合の根拠にしない」「不適合を適合で覆した記録を消さない」は、このツールの信頼性の中核にあたる。プロンプトで守らせるのではなく、統合スクリプト側で機械的に適用する
+3. **複数 URL の一括処理と Excel 出力が必要だったため。** `--manifest` による複数 URL 処理、URL ごとのシート分割、サマリーシートは、判定の組み立てが機械的でないと成立しない
 
-**ガード（すべてスクリプト側で機械的に適用）**:
-
-- **証拠必須ガード**: Claude 判定の `evidence` が空・欠落なら warning へ強制降格する
-- **axe-core カバレッジガード**: 上の 3 のとおり。`partial` の pass は適合の根拠にしない
-- **遷移ルール**: 「適合」への上書きは、上書き元に証拠（Claude は `evidence`、Visual / Interactive は `details`）がある場合のみ許可する。「不適合 → 適合」を試みた項目は成否を問わず `conflict: true` を立て、備考に「⚠️ 判定矛盾」を残す
-
-詳細は `docs/how-it-works.md` の第2章・第3章を参照。以下は 2026-02-27 に方式を比較したときの記録で、**現在の実装の説明ではありません。**
+いずれも現在のコードで確認できる事実にもとづく（`sanitizeClaudeOverrides()` / `applyOverrideStatus()` / `axeCoverage` / `--manifest`）。
 
 ---
 
-## オプションA: Claude による手動統合（2026-02-27 当時の実装・現在は不採用）
+## 検討した選択肢
 
-### 概要
+> 以下は **2026-02-27 に方式を比較したときの記録**です。現在の実装の説明ではありません。当時の想定と実装が食い違っている箇所は「設計案と実装の差分」にまとめてあります。
 
-SKILL.md の指示に従って、Claude がスキル実行時に3つのテスト結果を解釈し、統合してレポートを生成する方式です。決定性が確保できないため、現在は採用していません。
+### オプションA: Claude による統合（却下）
 
-### ワークフロー
-
-```
-ステップ2: axe-core テスト実行
-  ↓ JSON出力
-ステップ2.5: Visual テスト実行
-  ↓ JSON出力
-ステップ2.7: Interactive テスト実行
-  ↓ JSON出力
-ステップ3: Claude が結果を分析
-  ↓
-ステップ5.6: Claude が結果を統合してチェックシート生成
-```
-
-### 当時の統合ルール（現在の実装は上の「現在の実装」を参照）
-
-**優先順位**: Interactive テスト結果 > Visual テスト結果 > Claude判定 の順で上書き
-
-**判定ロジック**:
-1. axe-core の passes に含まれる項目 → **確認OK**（担当: 自動判定）※現在はカバレッジガードにより未確認
-2. axe-core の violations に含まれる項目 → **修正あり**（担当: 自動判定）
-3. axe-core の incomplete に含まれる項目 → **未確認**（担当: 要目視確認）
-4. Visual テストで pass → **確認OK**（担当: 自動判定(Visual)）※現在は証拠がある場合のみ
-5. Visual テストで fail → **修正あり**（担当: 自動判定(Visual)）
-6. Visual テストで warning → 判定を上書きしない（下位の判定を維持）
-7. Interactive テストで pass → **確認OK**（担当: 自動判定(Interactive)）※現在は証拠がある場合のみ
-8. Interactive テストで fail → **修正あり**（担当: 自動判定(Interactive)）
-9. Interactive テストで warning → 判定を上書きしない（下位の判定を維持）
-10. Claude が HTML 分析で判定 → **確認OK** or **修正あり** or **未確認**（担当: 自動判定(Claude)）※現在は証拠必須ガードあり
-11. 上記いずれにも該当しない → **未確認**（担当: 要目視確認）
-
-### メリット
-
-- ✅ **追加実装不要**: 既存の SKILL.md の指示だけで動作
-- ✅ **柔軟性が高い**: Claude が状況に応じて判断できる
-- ✅ **保守が容易**: スクリプトではなく自然言語の指示なので、修正が簡単
-- ✅ **例外処理が優秀**: 予期しないケースにも Claude が対応できる
-
-### デメリット
-
-- ⚠️ **トークン消費**: Claude が毎回結果を解釈するため、トークンを消費する
-- ⚠️ **実行時間**: 統合処理に若干の時間がかかる
-- ⚠️ **わずかなブレ**: 同じ入力でも、出力が若干異なる可能性がある（軽微）
-
-### 適用シーン
-
-- スキルとして手動実行する場合（現在の主な用途）
-- Claude が結果を解釈して追加の洞察を提供する場合
-- テスト結果の統合ロジックが頻繁に変更される可能性がある場合
-
----
-
-## オプションB: 統合スクリプトによる自動統合（採用・実装済み）
-
-> **実装との差分**: 実際に作られたのは `integrate-results.ts` ではなく `generate-checklist-xlsx.ts` で、
-> Markdown ではなく `merged-result.json` と Excel を出力します。達成基準の引き当ては、以下の設計案にある
-> ルールIDのマッピング表ではなく **WCAG タグ**で行っています。生成 AI 判定（`claude-overrides.json`）も
-> 4 つ目のソースとして統合されます。以下は当時の設計案であり、現在の仕様は上の「現在の実装」が正です。
-
-### 概要
-
-専用の統合スクリプトを作成し、テスト結果を機械的に統合して、最終的なチェックシートを生成します。
-
-### ワークフロー
+SKILL.md の指示に従って、Claude がスキル実行時に各テスト結果を解釈し、統合してレポートを生成する方式。
 
 ```
-ステップ2: axe-core テスト実行
-  ↓ JSON出力 → /tmp/axe-result.json
-ステップ2.5: Visual テスト実行
-  ↓ JSON出力 → /tmp/visual-result.json
-ステップ2.7: Interactive テスト実行
-  ↓ JSON出力 → /tmp/interactive-result.json
-ステップ2.8: 統合スクリプト実行
-  ↓
-bun scripts/integrate-results.ts \
-  --axe /tmp/axe-result.json \
-  --visual /tmp/visual-result.json \
-  --interactive /tmp/interactive-result.json \
-  --output a11y-checklist-{domain}-{date}.md
-  ↓
-最終チェックシート（Markdown）
+ステップ2   axe-core テスト実行     ↓ JSON出力
+ステップ2.5 Visual テスト実行       ↓ JSON出力
+ステップ2.7 Interactive テスト実行  ↓ JSON出力
+ステップ3   Claude が結果を分析
+ステップ5.6 Claude が結果を統合してチェックシート生成
 ```
 
-### 統合スクリプトの仕様
+**メリット（当時の評価）**
 
-#### 入力
+- 追加実装が不要。既存の SKILL.md の指示だけで動く
+- Claude が状況に応じて判断できる（柔軟性）
+- 自然言語の指示なので修正が簡単（保守性）
+- 予期しないケースにも対応できる
 
-- `--axe <path>`: axe-core テスト結果のJSONファイル
-- `--visual <path>`: Visual テスト結果のJSONファイル
-- `--interactive <path>`: Interactive テスト結果のJSONファイル
-- `--output <path>`: 出力するMarkdownファイルのパス
-- `--format <type>`: 出力フォーマット（`markdown` | `xlsx` | `json`、デフォルト: `markdown`）
+**デメリット（当時の評価）**
 
-#### 出力
+- Claude が毎回結果を解釈するためトークンを消費する
+- 統合処理に時間がかかる
+- 同じ入力でも出力が若干ぶれる可能性がある
 
-- Markdown形式のチェックシート（オプションAと同じフォーマット）
-- 各達成基準ごとに、担当・結果・備考を記載
+**却下した理由**
 
-#### データ構造
+「わずかなブレ」として軽く見積もっていた最後の項目が、実際には方式の可否を決める問題だった。アクセシビリティ検査の出力は「このページは適合している」という判断の根拠になるため、実行ごとに判定が変わることを許容できない。あわせて、上の「この方式を採る理由」に挙げた 2. 3. も指示ベースでは満たせない。
 
-```typescript
-// WCAG 達成基準のマスターデータ
-interface WCAGCriterion {
-  number: string;        // 例: "1.1.1"
-  name: string;          // 例: "非テキストコンテンツ"
-  level: "A" | "AA";
-  category: "知覚可能" | "操作可能" | "理解可能" | "堅牢";
-  description: string;   // 確認ポイント
-}
+参考までに、当時のオプションA の統合ルールは現在と次の点で異なっていた。**現在のルールは [how-it-works.md 第2章・第3章](../../../docs/how-it-works.md) が正。**
 
-// テスト結果の統合データ
-interface IntegratedResult {
-  criterion: string;     // 達成基準番号
-  担当: string;          // 例: "自動判定(Interactive)"
-  結果: "確認OK" | "修正あり" | "未確認";
-  備考: string;
-  screenshots?: string[];
-}
+| 当時の案 | 現在 |
+|---|---|
+| axe-core の `incomplete` → 「修正あり」 | 「未確認」。incomplete は「判定できなかった」であって不合格ではない |
+| axe-core の `passes` → 無条件に「確認OK」 | 基準ごとの `axeCoverage` で判断。現時点で `full` は 0 件なので pass 単独では適合にならない |
+| Visual / Interactive の `warning` → 「未確認」に上書き | 上書きしない（下位の判定を維持する） |
+| 証拠の有無を問わない上書き | 「適合」への上書きは証拠がある場合のみ許可し、「不適合 → 適合」は成否を問わず矛盾として記録する |
 
-// 統合ロジック
-function integrate(
-  axeResults: AxeResult,
-  visualResults: VisualResult,
-  interactiveResults: InteractiveResult
-): IntegratedResult[] {
-  const results: Map<string, IntegratedResult> = new Map();
+### オプションB: 統合スクリプトによる自動統合（採用）
 
-  // WCAG 全55項目をループ
-  for (const criterion of WCAG_CRITERIA) {
-    const result = {
-      criterion: criterion.number,
-      担当: "要目視確認",
-      結果: "未確認" as const,
-      備考: "",
-      screenshots: []
-    };
+専用のスクリプトで結果を機械的に統合し、最終的なチェックシートを生成する方式。
 
-    // 1. axe-core 結果を適用
-    const axeMatch = findAxeResult(axeResults, criterion);
-    if (axeMatch) {
-      applyAxeResult(result, axeMatch);
-    }
+**メリット（当時の評価）**
 
-    // 2. Visual テスト結果で上書き（優先度が高い）
-    const visualMatch = findVisualResult(visualResults, criterion);
-    if (visualMatch) {
-      applyVisualResult(result, visualMatch);
-    }
+- 機械的な処理のため統合が瞬時に完了する
+- 同じ入力に対して常に同じ出力が得られる
+- CI パイプラインに組み込みやすい
+- 統合自体はトークンを消費しない
+- 複数の URL を一括で処理できる
 
-    // 3. Interactive テスト結果で上書き（最優先）
-    const interactiveMatch = findInteractiveResult(interactiveResults, criterion);
-    if (interactiveMatch) {
-      applyInteractiveResult(result, interactiveMatch);
-    }
+**デメリット（当時の評価）**
 
-    results.set(criterion.number, result);
-  }
+- 統合スクリプトの開発が必要（当時の見積り: 約200〜300行）
+- WCAG 基準が変わった場合にマッピングの更新が必要
+- 予期しないケースへの対応が困難
+- 機械的な統合のみで、Claude による追加の分析がない
 
-  return Array.from(results.values());
-}
-```
+デメリットのうち実装コストの見積りは外れている。現在の `generate-checklist-xlsx.ts` は 55 項目の定義と Excel 生成を含めて約 1,560 行ある。ただし判定の信頼性と引き換えに払うコストとして許容した。
 
-#### 達成基準とテスト結果のマッピング
-
-```typescript
-// axe-core のルールIDから WCAG 達成基準へのマッピング
-const AXE_TO_WCAG: Record<string, string[]> = {
-  "aria-hidden-body": ["1.1.1", "4.1.2"],
-  "bypass": ["2.4.1"],
-  "color-contrast": ["1.4.3"],
-  "document-title": ["2.4.2"],
-  "html-has-lang": ["3.1.1"],
-  "html-lang-valid": ["3.1.1"],
-  "link-name": ["2.4.4", "4.1.2"],
-  "meta-viewport": ["1.4.4"],
-  "target-size": ["2.5.8"],
-  // ... その他のマッピング
-};
-
-// Visual テストのチェックIDから WCAG 達成基準へのマッピング
-const VISUAL_TO_WCAG: Record<string, string> = {
-  "reflow": "1.4.10",
-  "orientation": "1.3.4",
-  "target-size": "2.5.8",
-  "focus-visible": "2.4.7",
-  "label-in-name": "2.5.3",
-  "keyboard-trap": "2.1.2",
-  "focus-order": "2.4.3",
-  "text-resize": "1.4.4",
-  "non-text-contrast": "1.4.11",
-  "heading-structure": "1.3.1",
-  "aria-live": "4.1.3",
-  "autoplay-media": "1.4.2",
-  "char-key-shortcuts": "2.1.4",
-  "motion-actuation": "2.5.4",
-  "focus-not-obscured": "2.4.11",
-  "dragging-movements": "2.5.7",
-};
-
-// Interactive テストの criterion から直接マッピング
-const INTERACTIVE_TO_WCAG: Record<string, string> = {
-  "2.4.7": "2.4.7",
-  "2.4.3": "2.4.3",
-  "2.1.2": "2.1.2",
-  "2.4.11": "2.4.11",
-  "1.4.10": "1.4.10",
-  "1.3.4": "1.3.4",
-  "1.4.4": "1.4.4",
-  "3.2.1": "3.2.1",
-  "3.2.2": "3.2.2",
-};
-```
-
-### メリット
-
-- ✅ **高速**: 機械的な処理のため、統合が瞬時に完了
-- ✅ **一貫性**: 同じ入力に対して常に同じ出力が得られる
-- ✅ **CIパイプライン対応**: 自動化されたテストワークフローに組み込みやすい
-- ✅ **トークン消費なし**: Claude を使わないため、トークンを消費しない
-- ✅ **バッチ処理可能**: 複数のURLを一括で処理できる
-
-### デメリット
-
-- ❌ **実装コスト**: 統合スクリプトの開発が必要（約200〜300行）
-- ❌ **保守コスト**: マッピングテーブルの更新が必要（WCAG基準が変更された場合）
-- ❌ **柔軟性が低い**: 予期しないケースへの対応が困難
-- ❌ **洞察の欠如**: 機械的な統合のみで、Claude による追加の分析がない
-
-### 適用シーン
-
-- CIパイプラインで自動実行する場合
-- 大量のURLを一括でテストする場合
-- トークン消費を最小化したい場合
-- 一貫性と再現性が重要な場合
-
----
-
-## 実装ガイド（オプションB・当時の設計案）
-
-> 実際には WCAG 55項目のマスターデータは JSON ファイルではなく、`generate-checklist-xlsx.ts` 内の
-> `WCAG_CRITERIA` 定数（`axeTags` と `axeCoverage` を持つ）として実装されています。
-
-### ステップ1: WCAG マスターデータの作成
-
-`references/wcag-criteria.json` を作成：
-
-```json
-[
-  {
-    "number": "1.1.1",
-    "name": "非テキストコンテンツ",
-    "level": "A",
-    "category": "知覚可能",
-    "description": "すべての非テキストコンテンツに代替テキストがあるか"
-  },
-  {
-    "number": "1.2.1",
-    "name": "音声のみ及び映像のみ（収録済）",
-    "level": "A",
-    "category": "知覚可能",
-    "description": "音声/映像のみのコンテンツに代替テキストがあるか"
-  },
-  // ... 全55項目
-]
-```
-
-### ステップ2: 統合スクリプトの作成
-
-`scripts/integrate-results.ts` を作成：
-
-```typescript
-#!/usr/bin/env bun
-
-import { readFile } from "fs/promises";
-import { WCAG_CRITERIA } from "./wcag-criteria";
-import { AXE_TO_WCAG, VISUAL_TO_WCAG, INTERACTIVE_TO_WCAG } from "./mappings";
-
-interface CliArgs {
-  axe: string;
-  visual: string;
-  interactive: string;
-  output: string;
-  format: "markdown" | "xlsx" | "json";
-}
-
-function parseArgs(): CliArgs {
-  // 引数パース処理
-}
-
-async function integrate(args: CliArgs): Promise<void> {
-  // JSONファイルを読み込み
-  const axeResults = JSON.parse(await readFile(args.axe, "utf-8"));
-  const visualResults = JSON.parse(await readFile(args.visual, "utf-8"));
-  const interactiveResults = JSON.parse(await readFile(args.interactive, "utf-8"));
-
-  // 統合処理
-  const integratedResults = integrateResults(axeResults, visualResults, interactiveResults);
-
-  // 出力
-  if (args.format === "markdown") {
-    await generateMarkdown(integratedResults, args.output);
-  } else if (args.format === "xlsx") {
-    await generateExcel(integratedResults, args.output);
-  } else {
-    await generateJSON(integratedResults, args.output);
-  }
-}
-
-const args = parseArgs();
-integrate(args).catch((err) => {
-  console.error("Error:", err.message);
-  process.exit(1);
-});
-```
-
-### ステップ3: SKILL.md の更新
-
-ステップ2.8を追加：
-
-```markdown
-### ステップ2.8: 結果統合（自動）
-
-3つのテスト結果を統合して、最終チェックシートを生成する:
-
-\`\`\`bash
-bun scripts/integrate-results.ts \
-  --axe /tmp/axe-result-{domain}.json \
-  --visual /tmp/visual-result-{domain}.json \
-  --interactive /tmp/interactive-result-{domain}.json \
-  --output a11y-checklist-{domain}-{YYYY-MM-DD}.md
-\`\`\`
-
-統合ルール:
-- 優先順位: Interactive > Visual > axe-core
-- 同じ達成基準に複数の結果がある場合、優先度の高い方を採用
-- 判定: pass → 確認OK、fail → 修正あり、warning → 未確認
-```
-
-> 実装では、この統合はステップ2.8 ではなくステップ5.6（`generate-checklist-xlsx.ts` の実行）で行われ、
-> warning は「未確認にする」のではなく「上書きしない」挙動になっています。
-
----
-
-## 比較表
+### 比較表（2026-02-27 時点の評価）
 
 | 項目 | オプションA（Claude統合） | オプションB（スクリプト統合） |
 |------|-------------------------|----------------------------|
-| **実装コスト** | なし | 約200〜300行のコード |
+| **実装コスト** | なし | 約200〜300行のコード（実際は約1,560行） |
 | **実行速度** | 普通（数秒） | 高速（瞬時） |
 | **一貫性** | 中（わずかなブレあり） | 高（常に同じ結果） |
 | **柔軟性** | 高（Claude が判断） | 低（ルールベース） |
@@ -403,27 +104,46 @@ bun scripts/integrate-results.ts \
 | **保守コスト** | 低（自然言語の指示） | 中（マッピング更新） |
 | **CI対応** | 可能（要Claude API） | 容易 |
 | **洞察提供** | あり（Claude分析） | なし |
-| **適用シーン** | 手動実行、柔軟な判断が必要 | CI、バッチ処理、一貫性重視 |
+
+### 採らなかったハイブリッド案
+
+「手動実行時はオプションA、CI 実行時はオプションB」と環境変数で切り替える案も検討したが、採用していない。判定経路が 2 つあると、どちらの経路で出た結果かによって信頼性が変わり、レポートを読む人がそれを区別できないため。
 
 ---
 
-## 推奨事項
+## 設計案と実装の差分
 
-### 現在の運用
+当時の設計案（オプションB）と、実際に作られたものの対応。**いずれも現在の実装が正。**
 
-**オプションB（スクリプト統合）を採用。** 判定は `generate-checklist-xlsx.ts` が決定的に行い、Claude は判定ソースの1つ（HTML / アクセシビリティツリーの分析）としてのみ関与します。
+| 当時の設計案 | 実装 |
+|---|---|
+| 専用スクリプト `scripts/integrate-results.ts` を新設 | `scripts/generate-checklist-xlsx.ts` が統合と Excel 生成を兼ねる |
+| 出力は Markdown（`--format` で xlsx / json も選択） | `merged-result.json` と Excel を出力。Markdown は `merged-result.json` から別途生成する |
+| axe-core の**ルールIDのマッピング表**（`AXE_TO_WCAG`）で達成基準に引き当てる | axe-core が各ルールに持つ **WCAG タグ**（`wcag111` 等）で引き当てる。1 ルールが複数タグを持つ場合は該当するすべての基準に反映される |
+| WCAG 55項目のマスターデータを `references/wcag-criteria.json` に置く | `generate-checklist-xlsx.ts` 内の `WCAG_CRITERIA` 定数として定義する（各項目が `axeTags` と `axeCoverage` を持つ） |
+| 統合の入力は axe-core / Visual / Interactive の 3 ソース | 生成 AI 判定（`claude-overrides.json`）を加えた 4 ソース |
+| SKILL.md のステップ2.8 で統合する | ステップ5.5 で統合する（生成 AI 判定がステップ5 で出るため、その後になる） |
+| `warning` は「未確認」に上書きする | `warning` は判定を上書きしない |
+| 17項目ビューは想定なし | `generate-baseline-view.ts` が `merged-result.json` から生成する |
 
-当初はオプションA（Claude が統合する）を採っていましたが、次の理由で移行しました。
-
-- 同じ入力に対して同じ判定を返せない（統合ロジックが自然言語の指示だったため）
-- 「証拠のない合格を通さない」「部分的な検査結果を合格にしない」といったガードを、指示ではなくコードで担保する必要があった
-- 複数URLの一括処理と Excel 出力が必要になった
-
-Claude 判定の再現性は依然として決定的ではありません（`docs/how-it-works.md` 第6章）。ガードで「証拠のない判定を通さない」ことは担保していますが、毎回同じ判定を出させる仕組みではありません。
+なお、当時の設計案には証拠必須ガード・カバレッジガード・遷移制限のいずれも含まれていない。これらは公開後に追加したもの（証拠必須ガードと遷移制限は issue #8 / #9、カバレッジガードは issue #31 / #35）で、判断の背景は how-it-works.md の第 6 章「意図的な設計判断」にある。
 
 ---
+
+## 決定の限界
+
+統合を決定的にしても、**入力である生成 AI 判定の再現性は決定的ではない。** ガードによって「証拠のない判定を最終結果に通さない」ことは担保しているが、毎回同じ判定を出させる仕組みではない（[how-it-works.md 第6章](../../../docs/how-it-works.md)）。
+
+---
+
+## この文書自身の記録について
+
+- 初版（2026-02-27）の変更履歴には「オプションA実装完了、オプションB設計のみ」と記録されている
+- ただしリポジトリの最初のコミット（`908157e` / v0.1.0 beta）の時点で、`generate-checklist-xlsx.ts` はすでに `mergeResults()`・`--manifest`・`merged-result.json` 出力を備えており、統合はスクリプト側で行われていた。同じコミットに含まれる本ドキュメントは「オプションAが現在の実装」と書いており、**公開時点ですでに実装と食い違っていた**
+- リポジトリ管理下に入る前（公開前）にオプションA が実際に動いていた時期があったかどうかは、**記録が残っていないため確認できない**
 
 ## 変更履歴
 
-- **2026-02-27**: 初版作成（オプションA実装完了、オプションB設計のみ）
-- **2026-08-20**: 実装がオプションB（`generate-checklist-xlsx.ts` による決定的な統合）に移行済みであることを反映。証拠必須ガード・カバレッジガード・遷移ルールを追記し、オプションAの記述を過去の記録として明示（issue #31）
+- **2026-02-27**: 初版作成（オプションA を「現在の実装」、オプションB を設計案として記載）
+- **2026-08-20**: 実装がオプションB であることを反映し、証拠必須ガード・カバレッジガード・遷移ルールを追記（issue #31）
+- **2026-08-20**: 役割を「統合方式の設計判断の記録」に限定。現在の動作仕様の説明は how-it-works.md への参照に置き換え、設計案の実装ガイド（コード断片・マッピング表の草案）は「設計案と実装の差分」表に集約した（issue #32）
