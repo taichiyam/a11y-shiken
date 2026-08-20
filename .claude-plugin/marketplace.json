@@ -1,0 +1,30 @@
+{
+  "name": "a11y-shiken",
+  "description": "a11y-shiken — WCAG 2.2 Level A+AA のアクセシビリティ検査スキルを配布するマーケットプレイス",
+  "owner": {
+    "name": "taichiyam",
+    "url": "https://github.com/taichiyam"
+  },
+  "plugins": [
+    {
+      "name": "a11y-shiken",
+      "source": "./",
+      "description": "URL を渡すと WCAG 2.2 Level A+AA の 55 項目チェックシートを埋め、ディレクター向けの Excel と開発者向けの Markdown を出力する Claude Code スキル。デジタル庁『ウェブアクセシビリティ導入ガイドブック』の基本17項目ビューつき。ベータ版。",
+      "version": "0.1.0",
+      "author": {
+        "name": "taichiyam"
+      },
+      "homepage": "https://github.com/taichiyam/a11y-shiken#readme",
+      "repository": "https://github.com/taichiyam/a11y-shiken",
+      "license": "MIT",
+      "category": "accessibility",
+      "tags": [
+        "accessibility",
+        "a11y",
+        "wcag",
+        "axe-core",
+        "playwright"
+      ]
+    }
+  ]
+}

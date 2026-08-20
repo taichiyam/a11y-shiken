@@ -22,3 +22,5 @@ jobs:
       - name: Type check
         working-directory: skills/a11y-shiken/scripts
         run: bunx tsc --noEmit
+      - name: Validate plugin manifests
+        run: node .github/scripts/validate-manifests.mjs
