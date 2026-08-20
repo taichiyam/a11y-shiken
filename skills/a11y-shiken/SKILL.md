@@ -354,7 +354,9 @@ axe-coreで「未確認」となった項目について、ステップ2.9で取
 
 ### ステップ5.5: Excel + merged-result.json 生成（統合版）
 
-すべてのチェック（axe-core、Visual テスト、Interactive テスト、Claude HTML分析）完了後に、全結果を統合した Excel チェックシートと `merged-result.json`（Single Source of Truth）を生成する。`REPORT_FORMAT` が `markdown` の場合でも `merged-result.json` は必ず生成する（ステップ5.7のMarkdownレポートが参照するため）。Excel は `REPORT_FORMAT` が `excel` または `both` の場合のみ生成する。
+すべてのチェック（axe-core、Visual テスト、Interactive テスト、Claude HTML分析）完了後に、全結果を統合した Excel チェックシートと `merged-result.json`（Single Source of Truth）を生成する。
+
+**このステップは `REPORT_FORMAT` の値にかかわらず必ず実行する。** `generate-checklist-xlsx.ts` は `--output` が必須で Excel ファイルを常に書き出すため、`REPORT_FORMAT` が `markdown` の場合も `.xlsx` ファイル自体は生成される（`merged-result.json` の生成に必要な副産物として扱い、最終報告で案内しないだけ）。Excel の生成を抑止するフラグは現時点で存在しない。
 
 **Claude オーバーライド JSON のフォーマット:**
 ステップ5のClaude分析結果は以下のJSON形式で保存する:
@@ -626,10 +628,10 @@ cp <skill_dir>/references/index-html-template.html {OUTPUT_DIR}/report/index.htm
 
 全ファイルの生成が完了したら、ユーザーに以下のディレクトリ構成と通知を行う。ステップ1.5 で選択された `REPORT_FORMAT`（`excel` / `markdown` / `both`）に応じて、生成されなかったファイルはディレクトリ構成から省略する。
 
-| `REPORT_FORMAT` | 生成されないもの |
+| `REPORT_FORMAT` | 最終報告で案内しないもの |
 |---|---|
-| `excel` | `markdown/{ラベル}.md`・`markdown/_index.md`（ステップ5.7）、`index.md`・`index.html`（ステップ5.9） |
-| `markdown` | `a11y-checklist-*.xlsx`（ステップ5.5） |
+| `excel` | `markdown/{ラベル}.md`・`markdown/_index.md`（ステップ5.7 をスキップ）、`index.md`・`index.html`（ステップ5.9 をスキップ） |
+| `markdown` | `a11y-checklist-*.xlsx`（ファイル自体はステップ5.5 で常に生成される。`generate-checklist-xlsx.ts` は `--output` 必須のため。報告で案内しないだけ） |
 | `both` | なし |
 
 #### 生成されるファイル構成（単一URL・複数URL 共通）

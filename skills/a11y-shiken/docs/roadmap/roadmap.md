@@ -344,7 +344,7 @@ Claude 分析が最もAPIコストが高いため、用途に応じて出力物�
 |-------|------|-------------|------|
 | `--no-claude-analysis` | 未実装 | **大**（ツリー/HTML の入力トークンが大きい） | 未確認項目が増える |
 | `--no-markdown` | ✅ `REPORT_FORMAT: excel` で実現済み | 中（統合Markdownレポートをスキップ） | `markdown/{ラベル}.md` / `_index.md` / `index.md` / `index.html` が生成されない |
-| `--no-excel` | ✅ `REPORT_FORMAT: markdown` で実現済み | なし（ローカル処理） | Excelが不要な場合のみ |
+| `--no-excel` | 未実装（`REPORT_FORMAT: markdown` は最終報告で Excel を案内しないだけで、`generate-checklist-xlsx.ts` は `--output` 必須のため `.xlsx` ファイル自体は常に生成される） | なし（ローカル処理） | Excelが不要な場合のみ |
 | `--no-index` | 未実装 | 軽微 | `index.md` が生成されない |
 
 **残る検討点**: 非対話実行（CI 等）では AskUserQuestion が使えないため、`REPORT_FORMAT` を引数で渡せる手段は別途必要。
