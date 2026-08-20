@@ -130,7 +130,7 @@ URL入力
 }
 ```
 
-`passes` には `nodes` を含めない（結果ファイルの肥大化を避けるため）。
+`violations` / `incomplete` は `nodes`（該当要素の HTML・セレクタ・失敗理由）を含むが、`passes` は含まない。
 
 ### 3.2 generate-checklist-xlsx.ts（結果統合 + Excel 生成）
 
@@ -291,12 +291,14 @@ URL入力
 
 ```
 1. gog sheets metadata <ID>     → シート名・構造を取得
-2. gog sheets get <ID> '<範囲>'  → ヘッダー行・データ範囲を確認
-3. merged-result.json の判定をマッピング
+2. 対象シートのヘッダー行・データ範囲を確認
+3. 各達成基準に結果をマッピング
 4. gog sheets update <ID> '<範囲>' --values-json '[...]'  → 担当列・チェック欄を一括更新
 ```
 
-**注意**: スプレッドシートの列構成はプロジェクトにより異なるため、書き込み前にヘッダー行を確認すること。詳細は `references/google-sheets.md`。
+**注意**: スプレッドシートの列構成はプロジェクトにより異なるため、書き込み前にヘッダー行を確認すること。手順の詳細は `references/google-sheets.md`。
+
+> **未解決の不整合**: `references/google-sheets.md` の手順3は、`merged-result.json` ではなく axe-core の結果を直接マッピングする表（`passes` にマッチ → 確認OK）のままになっている。これは `merged-result.json` を唯一の正とする現在の設計、およびカバレッジガード（`axeCoverage: "partial"` の pass は適合にしない）と食い違う。この連携の是正は本ドキュメントの範囲外。
 
 ## 4. 結果ラベル体系
 
