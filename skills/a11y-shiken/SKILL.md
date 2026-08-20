@@ -247,7 +247,7 @@ Playwright の `page.locator("body").ariaSnapshot()` を使って、**JS実行�
 
 ```bash
 cd <skill_dir> && bun scripts/a11y-tree.ts <URL> \
-  --output {OUTPUT_DIR}/data/a11y-tree.txt
+  --output {OUTPUT_DIR}/data/{ラベル}/a11y-tree.txt
 ```
 
 **SPA サイトでの優位性**: `scripts/lib/stable-browser.ts` の決定的な読み込み手順（load 待ち → networkidle best-effort → 全ページスクロール → フォント待ち）で JS 実行後を待機するため、React/Vue 等の SPA でも正しくレンダリングされた後のツリーを取得できる。WebFetch では JS 実行前の静的 HTML しか取れないケースをカバー。
@@ -354,7 +354,9 @@ axe-coreで「未確認」となった項目について、ステップ2.9で取
 
 ### ステップ5.5: Excel + merged-result.json 生成（統合版）
 
-すべてのチェック（axe-core、Visual テスト、Interactive テスト、Claude HTML分析）完了後に、全結果を統合した Excel チェックシートと `merged-result.json`（Single Source of Truth）を生成する。`REPORT_FORMAT` が `markdown` の場合でも `merged-result.json` は必ず生成する（ステップ5.7のMarkdownレポートが参照するため）。Excel は `REPORT_FORMAT` が `excel` または `both` の場合のみ生成する。
+すべてのチェック（axe-core、Visual テスト、Interactive テスト、Claude HTML分析）完了後に、全結果を統合した Excel チェックシートと `merged-result.json`（Single Source of Truth）を生成する。
+
+**このステップは `REPORT_FORMAT` の値にかかわらず必ず実行する。** `generate-checklist-xlsx.ts` は `--output` が必須で Excel ファイルを常に書き出すため、`REPORT_FORMAT` が `markdown` の場合も `.xlsx` ファイル自体は生成される（`merged-result.json` の生成に必要な副産物として扱い、最終報告で案内しないだけ）。Excel の生成を抑止するフラグは現時点で存在しない。
 
 **Claude オーバーライド JSON のフォーマット:**
 ステップ5のClaude分析結果は以下のJSON形式で保存する:
@@ -624,7 +626,13 @@ cp <skill_dir>/references/index-html-template.html {OUTPUT_DIR}/report/index.htm
 
 ### ステップ6: 完了通知
 
-全ファイルの生成が完了したら、ユーザーに以下のディレクトリ構成と通知を行う。`--report` オプションに応じて、生成されなかったファイルはディレクトリ構成から省略する。
+全ファイルの生成が完了したら、ユーザーに以下のディレクトリ構成と通知を行う。ステップ1.5 で選択された `REPORT_FORMAT`（`excel` / `markdown` / `both`）に応じて、生成されなかったファイルはディレクトリ構成から省略する。
+
+| `REPORT_FORMAT` | 最終報告で案内しないもの |
+|---|---|
+| `excel` | `markdown/{ラベル}.md`・`markdown/_index.md`（ステップ5.7 をスキップ）、`index.md`・`index.html`（ステップ5.9 をスキップ） |
+| `markdown` | `a11y-checklist-*.xlsx`（ファイル自体はステップ5.5 で常に生成される。`generate-checklist-xlsx.ts` は `--output` 必須のため。報告で案内しないだけ） |
+| `both` | なし |
 
 #### 生成されるファイル構成（単一URL・複数URL 共通）
 
@@ -636,18 +644,25 @@ cp <skill_dir>/references/index-html-template.html {OUTPUT_DIR}/report/index.htm
 │   ├── markdown/
 │   │   ├── _index.md                                    ← 概要 + ページ別サマリー
 │   │   ├── {ラベル}.md                                   ← 統合レポート（ページごと）
+│   │   ├── {ラベル}-baseline-17.md                       ← 基本17項目ビュー（デジタル庁）
 │   │   └── ...
 │   └── a11y-checklist-{サイト名}-{YYYY-MM-DD}.xlsx       ← Excel チェックシート
 └── data/                                                 ← 作業データ
     ├── manifest.json
     ├── {ラベル}/
-    │   ├── axe-result.json
-    │   ├── visual-result.json
-    │   ├── interactive-result.json
-    │   ├── claude-overrides.json
+    │   ├── axe-result.json                              ← ステップ2（axe-core）
+    │   ├── visual-result.json                           ← ステップ2.5（Visual）
+    │   ├── interactive-result.json                      ← ステップ2.7（Interactive）
+    │   ├── a11y-tree.txt                                ← ステップ2.9（アクセシビリティツリー）
+    │   ├── claude-overrides.json                        ← ステップ5（Claude 判定）
+    │   ├── merged-result.json                           ← ステップ5.5（55項目の最終判定 / Single Source of Truth）
+    │   ├── baseline-17.json                             ← ステップ5.5b（基本17項目への集約結果）
     │   └── screenshots/
     └── ...
 ```
+
+> `merged-result.json` は `REPORT_FORMAT` に関わらず必ず生成される（Markdownレポート・基本17項目ビューの入力となるため）。
+> `{ラベル}-baseline-17.md` は `REPORT_FORMAT` が `excel` の場合も `report/markdown/` に生成される。
 
 保存後、ユーザーに以下を通知する:
 - 出力ディレクトリのパス

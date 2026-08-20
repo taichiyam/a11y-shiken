@@ -15,7 +15,13 @@ ok 版（`ok/`）は同一レイアウトのまま、下表のすべての箇所
 
 注意: axe-core は WCAG タグ（wcag2a / wcag2aa / wcag21a / wcag21aa / wcag22a / wcag22aa）のみで実行するため、
 best-practice タグのルール（`region` / `landmark-one-main` / `heading-order` / `empty-heading` 等）は発火しない。
+またタグ指定実行では axe-core の既定 `tagExclude`（`experimental` / `deprecated`）が効くため、WCAG タグを持っていても
+`td-has-header` / `table-fake-caption` / `label-content-name-mismatch` / `css-orientation-lock` / `audio-caption` は実行されない。
 これらに相当する違反の検出経路は Visual / AI判定 / 目視として記載している。
+
+さらに、axe-core のルールが持つ WCAG タグと「その違反が人間にとってどの SC の問題か」は一致しないことがある。
+本表の「検出経路」に `axe: {ルール名}` と書くのは、**そのルールが実際に violation として発火し、かつ当該 SC のタグを持つ**場合に限る
+（例: axe `label` は `wcag412` タグのみのため、3.3.2 の行では `axe: label` と書かない）。
 
 ## 違反一覧
 
@@ -36,7 +42,7 @@ best-practice タグのルール（`region` / `landmark-one-main` / `heading-ord
 | NG-06 | 1.3.1 | A | index.html | 見出し構造 | h1 の直後が h3（h2 をスキップ）。カード見出しは h4 | 不適合 | Visual: `checkHeadingStructure` |
 | NG-07 | 1.1.1 | A | index.html | `.hero img` | `alt="画像"`（内容を説明しない代替テキスト） | 不適合 | AI判定（alt は存在するため axe `image-alt` は発火しない） |
 | NG-08 | 1.4.3 | AA | index.html | お知らせの日付 `.news .date` | 文字色 `#aaaaaa`（白背景に約 2.3:1） | 不適合 | axe: `color-contrast` |
-| NG-09 | 2.4.4 | A | index.html | お知らせ・利用案内のリンク | 「詳しくはこちら」「こちら」など行き先の分からないリンクテキスト（複数、行き先はそれぞれ異なる） | 不適合 | AI判定（axe の該当自動ルールなし） |
+| NG-09 | 2.4.4 | A | index.html | お知らせ・利用案内のリンク | 「詳しくはこちら」「こちら」など行き先の分からないリンクテキスト（複数、行き先はそれぞれ異なる） | 不適合 | AI判定（2.4.4 に紐づく axe ルール `link-name` はアクセシブルネームの**有無**しか見ないため、「こちら」でも pass する） |
 | NG-10 | 3.1.2 | AA | index.html | 英語キャッチコピー `.tagline .en` | 英語フレーズに `lang="en"` なし | 不適合 | AI判定・目視 |
 | NG-11 | 2.5.8 | AA | index.html | SNS アイコンリンク `.sns-link` | ターゲットサイズ 18×18px（最小 24×24px 未満） | 不適合 | Visual: `checkTargetSize`（warning）。axe の `target-size` は周囲に隣接ターゲットがないため spacing exception で pass する |
 
@@ -46,7 +52,7 @@ best-practice タグのルール（`region` / `landmark-one-main` / `heading-ord
 |----|----|--------|--------|------------------|-----------|----------|----------|
 | NG-12 | 2.4.2 | A | facility.html | `head` | `title` 要素なし | 不適合 | axe: `document-title` |
 | NG-13 | 1.1.1 | A | facility.html | `.gallery img`（3枚） | `alt` 属性なし | 不適合 | axe: `image-alt` |
-| NG-14 | 1.3.1 | A | facility.html | 貸室一覧テーブル `.rooms-table` | `caption` / `th` なし（`td` + 装飾クラスで見た目だけ再現） | 不適合 | AI判定・目視（この形は axe では発火しない） |
+| NG-14 | 1.3.1 | A | facility.html | 貸室一覧テーブル `.rooms-table` | `caption` / `th` なし（`td` + 装飾クラスで見た目だけ再現） | 不適合 | AI判定・目視（`th` が1つもないため `th-has-data-cells` は該当せず、`td-has-header` / `table-fake-caption` は experimental タグで実行されない） |
 | NG-15 | 2.4.6 | AA | facility.html | 減免案内の見出し | 「その他のご案内」— 内容（利用料金の減免）を説明しない見出し | 不適合 | AI判定 |
 
 ### contact.html（お問い合わせ）
@@ -54,11 +60,11 @@ best-practice タグのルール（`region` / `landmark-one-main` / `heading-ord
 | ID | SC | レベル | ページ | 箇所（セレクタ） | 仕込み内容 | 期待判定 | 検出経路 |
 |----|----|--------|--------|------------------|-----------|----------|----------|
 | NG-16 | 2.4.2 | A | contact.html | `title` | 「ページ」という内容を説明しないタイトル（存在はするため axe は発火しない） | 不適合 | AI判定 |
-| NG-17 | 3.3.2 | A | contact.html | 電話番号入力欄 `#tel` | 「電話番号」のテキストは隣接表示されているが `label` 要素で関連付けられていない（`placeholder` もなし。placeholder があると accessible name になり axe が発火しないため） | 不適合 | axe: `label` |
+| NG-17 | 3.3.2 | A | contact.html | 電話番号入力欄 `#tel` | 「電話番号」のテキストは隣接表示されているが `label` 要素で関連付けられていない（`placeholder` もなし。placeholder があると accessible name になり axe が発火しないため） | 不適合 | AI判定・目視（axe `label` は violation として発火するが、タグが `wcag412` のみのため本ツールでは 4.1.2 側に集計される。3.3.2 に紐づく axe ルールは `form-field-multiple-labels` だけで、これは passes に入りカバレッジガードで「未確認」に倒れる） |
 | NG-18 | 1.3.5 | AA | contact.html | 氏名・メール入力欄 | `autocomplete` 属性なし | 不適合 | AI判定・目視（Visual の 1.3.5 チェックは「フォームあり」の汎用 warning のみで欠落自体は特定しない。axe `autocomplete-valid` は値が不正な場合のみ発火） |
 | NG-19 | 1.4.1 | A | contact.html | 必須項目の表示 | 「赤字の項目は必須です」— 色のみで必須を伝える（赤は `#b30000` でコントラスト自体は 4.5:1 以上を確保し、1.4.3 と混ざらないようにしている） | 不適合 | AI判定・目視 |
 | NG-20 | 1.4.11 | AA | contact.html | 入力欄の枠線 | `border: #dddddd`（白背景に約 1.4:1、3:1 未満） | 不適合 | Visual: `checkNonTextContrast` |
-| NG-21 | 2.5.3 | A | contact.html | 送信ボタン | 表示テキスト「送信する」に対し `aria-label="フォーム"`（ラベルが name に含まれない） | 不適合 | Visual: `checkLabelInName` |
+| NG-21 | 2.5.3 | A | contact.html | 送信ボタン | 表示テキスト「送信する」に対し `aria-label="フォーム"`（ラベルが name に含まれない） | 不適合 | Visual: `checkLabelInName`（axe `label-content-name-mismatch` は experimental タグのためタグ指定実行では動作しない） |
 | NG-22 | 1.4.4 | AA | contact.html | `meta[name=viewport]` | `maximum-scale=1, user-scalable=no` で拡大禁止 | 不適合 | axe: `meta-viewport` |
 | NG-23 | 4.1.2 | A | contact.html | 同意チェック `.fake-checkbox` | `div` 自作チェックボックス。role / name / state なし、キーボード操作不可 | 不適合 | AI判定・目視 |
 
@@ -66,7 +72,7 @@ best-practice タグのルール（`region` / `landmark-one-main` / `heading-ord
 
 精度実測の突き合わせで「表にない SC の指摘」を誤検出と即断しないための注記。
 
-- **NG-17（label なし入力欄）**: 主たる SC は 3.3.2 だが、ラベル欠如は 1.3.1（情報及び関係性）・4.1.2（name の欠如）としても指摘されうる。axe の `label` ルール自体が wcag131 / wcag412 タグを持つ
+- **NG-17（label なし入力欄）**: 主たる SC は 3.3.2 だが、ラベル欠如は 1.3.1（情報及び関係性）・4.1.2（name の欠如）としても指摘されうる。なお axe の `label` ルールが持つ WCAG タグは `wcag412` のみで（`wcag131` も `wcag332` も持たない）、本ツールの集計では 4.1.2 の不適合としてのみ現れる
 - **NG-23（div 自作チェックボックス）**: 主たる SC は 4.1.2 だが、キーボード操作不可のため 2.1.1（キーボード）としても指摘されうる
 - **NG-01（ランドマークなし）**: 主たる SC は 2.4.1 だが、文書構造の欠如として 1.3.1 で指摘されうる
 - **NG-19（色のみの必須表示）**: 必須であることが label に含まれないため 3.3.2 の説明不足として指摘されうる
@@ -99,6 +105,8 @@ axe-core（`@axe-core/playwright`、WCAG タグのみ）をローカル配信し
 | ng/index.html | `html-has-lang`、`color-contrast`×3、`button-name` |
 | ng/facility.html | `document-title`、`image-alt`×3、`button-name` |
 | ng/contact.html | `label`、`meta-viewport`、`button-name` |
+
+（2026-08-21 に axe-core 4.11.1 で全6ページを再実行し、上表と一致することを確認済み。ok 版は incomplete も 0 件）
 
 Visual テスト（`a11y-visual-test.ts`）では ng 版で `checkHeadingStructure`（h1→h3 スキップ）、`checkTargetSize`（`.sns-link` 18×18px）、
 `checkLabelInName`（送信ボタン）、`checkNonTextContrast`（フォーム枠線 1.36:1）が検出されることを確認済み。
