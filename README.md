@@ -23,7 +23,11 @@ npm には公開していません。GitHub リポジトリから直接導入し
 ### 1. `npx skills add`（推奨）
 
 ```bash
+# プロジェクトに入れる
 npx skills add taichiyam/a11y-shiken
+
+# 自分の環境すべてで使う（ユーザーレベル）
+npx skills add taichiyam/a11y-shiken --global
 ```
 
 このリポジトリの `skills/a11y-shiken/` を読み取り、エージェントのスキルディレクトリに配置します。
