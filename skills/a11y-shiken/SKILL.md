@@ -88,7 +88,7 @@ cd <skill_dir>/scripts && bun install
 `bunx playwright install chromium` は冪等（インストール済みなら何もしない）なため、チェックなしで毎回実行する。`node` コマンド非依存でどの環境でも確実に動作する。
 
 ```bash
-cd <skill_dir>/scripts && bunx playwright install chromium --quiet
+cd <skill_dir>/scripts && bunx playwright install chromium
 ```
 
 インストール先: `~/Library/Caches/ms-playwright/`（Mac）/ `~/.cache/ms-playwright/`（Linux）
@@ -207,6 +207,8 @@ cd <skill_dir> && bun scripts/a11y-visual-test.ts <URL>
 
 > **pass を出さないチェック**: non-text-contrast（境界線のみ検証）/ heading-structure（1.3.1 のうち見出し階層のみ検証）/ aria-live（属性の存在しか検証できない）は、検査範囲が達成基準の一部にとどまるため、問題未検出でも pass を出さず warning（要目視確認）を返す。また char-key-shortcuts / motion-actuation / dragging-movements は、CDP によるイベントリスナー検査に失敗した場合は pass を出さず warning を返す。
 
+> **対象要素の有無しか見ないチェック**: input-purpose(1.3.5) / error-identification(3.3.1) / labels-or-instructions(3.3.2) / error-suggestion(3.3.3) / redundant-entry(3.3.7) はフォーム要素の有無、accessible-authentication(3.3.8) は `input[type="password"]` の有無だけを判定する。**該当要素が無ければ「該当コンテンツなし」で pass、有れば必ず warning** を返す（fail は返さない）。フォーム送信・バリデーション発火は行わないため、エラー表示や修正提案の実在は検証していない。
+
 > reflow, orientation, focus-visible, keyboard-trap, focus-order, text-resize, focus-not-obscured の7チェックはステップ2.7の Interactive テストに統合済み。
 
 **結果ラベル**: pass → 確認OK（自動判定(Visual)）、fail → 修正あり（自動判定(Visual)）、warning → 未確認(要確認)（要目視確認）
@@ -224,12 +226,12 @@ cd <skill_dir> && bun scripts/a11y-interactive-test.ts <URL>
 **検証項目（9チェック）:**
 
 1. **フォーカス可視化（2.4.7）**: フォーカス可能要素に順にフォーカスし、フォーカス前後の computed style 差分（outline / box-shadow / 背景色・枠線色の変化）でインジケータの有無を判定。常時付与されている装飾用 box-shadow 等は差分に現れないため誤カウントしない。インジケータの欠如（outline: none 等）は fail として検出するが、スタイル変化が存在しても実際の視認性（コントラスト・太さ）は自動検証できないため pass は出さず warning（要目視確認）とする
-2. **フォーカス順序（2.4.3）**: Tab移動順序をトレースし、DOM順序と比較して論理的か判定
-3. **キーボードトラップ（2.1.2）**: 全フォーカス可能要素をTab/Shift+Tabで移動し、トラップ（無限ループ）がないか確認
+2. **フォーカス順序（2.4.3）**: Tab は送出せず、DOM順に並べたフォーカス可能要素の座標（top/left）が逆行していないかを比較する。逆行率0で pass、0.2以上で fail、その間は warning。正の tabindex が存在する場合は warning
+3. **キーボードトラップ（2.1.2）**: 最初の要素にフォーカス後、Tab を繰り返し送出して `document.activeElement` の遷移を追跡する（Shift+Tab による逆方向は未検証）。同一要素に3回連続で留まる／訪問カバレッジ0.5未満で循環が閉じる／最大反復まで循環が閉じない場合に fail
 4. **フォーカス不明瞭化防止（2.4.11）**: fixed/sticky要素によってフォーカス要素が隠れないかスクリーンショットで確認。fixed/sticky要素が存在しない場合のみ pass、存在する場合は全スクロール位置を検証できないため隠れ未検出でも warning とする
 5. **リフロー（1.4.10）**: ビューポートを320x256pxに変更し、横スクロールバーが発生しないか確認
-6. **表示の向き（1.3.4）**: portrait/landscape両方でスクリーンショットを取得し、レイアウト崩れがないか確認
-7. **テキストサイズ変更（1.4.4）**: 200%ズームでスクリーンショットを取得し、テキストの切れや重なりがないか確認
+6. **表示の向き（1.3.4）**: portrait(375x667)/landscape(667x375)両方でスクリーンショットを取得する。**撮影のみで画像比較・崩れ検出は行わないため、pass も fail も返さず常に warning（要目視確認）**
+7. **テキストサイズ変更（1.4.4）**: `body` に `zoom: 2.0` を当ててスクリーンショットを取得し、`overflow: hidden` かつ `scrollHeight > clientHeight` の要素があれば fail（縦方向のテキスト切れ）。重なり・横方向のはみ出し・可読性は自動検証できないため pass は出さず warning
 8. **フォーカス時の挙動（3.2.1）**: フォーカス前後でURLとDOMスナップショット（innerHTMLハッシュ + 可視要素数）を比較。メインフレームのナビゲーションも監視するため、同一URLへの reload / replace もページ遷移として fail 検出。DOM変化は warning、変化なしを確認できた場合のみ pass
 9. **入力時の挙動（3.2.2）**: フォームフィールド（テキスト系 input 全種 + number / textarea / select / checkbox / radio）の値を入力・変更し、前後のURLとDOMスナップショットを比較。同一URLへの再読み込みを含むページ遷移（自動送信・select の onchange 遷移等）は fail、DOM変化は warning、変化なしを確認できた場合のみ pass。自動操作に未対応の入力タイプ（date / range / file 等）が残る場合は pass を出さず warning
 
@@ -241,7 +243,7 @@ cd <skill_dir> && bun scripts/a11y-interactive-test.ts <URL>
 
 ### ステップ2.9: アクセシビリティツリー取得
 
-Playwright の `page.accessibility.snapshot()` を使って、**JS実行後のレンダリング済みアクセシビリティツリー**を取得する。agent-browser の `snapshot` コマンドと同等の出力を既存の Playwright 環境で実現する。
+Playwright の `page.locator("body").ariaSnapshot()` を使って、**JS実行後のレンダリング済みアクセシビリティツリー**を取得する。agent-browser の `snapshot` コマンドと同等の YAML 形式の出力を既存の Playwright 環境で実現する。
 
 ```bash
 cd <skill_dir> && bun scripts/a11y-tree.ts <URL> \
@@ -250,21 +252,25 @@ cd <skill_dir> && bun scripts/a11y-tree.ts <URL> \
 
 **SPA サイトでの優位性**: `scripts/lib/stable-browser.ts` の決定的な読み込み手順（load 待ち → networkidle best-effort → 全ページスクロール → フォント待ち）で JS 実行後を待機するため、React/Vue 等の SPA でも正しくレンダリングされた後のツリーを取得できる。WebFetch では JS 実行前の静的 HTML しか取れないケースをカバー。
 
-**出力例:**
+**出力例:**（`ariaSnapshot()` は YAML 形式で、role と accessible name を `- role "name":` の形で出力する。`aria-label` は解決済みの値になる）
 ```
 # アクセシビリティツリー
 URL: https://example.com
 取得日時: 2026-03-05T...
 
-[RootWebArea] "Example Site"
-  [banner]
-    [navigation] "グローバルナビ"
-      [link] "ホーム"
-      [link] "お問い合わせ"
-  [main]
-    [heading] "サービス紹介" level=1
-    [link] "詳細を見る" (aria-label解決済み)
-  [contentinfo]
+- link "本文へスキップ":
+  - /url: "#main"
+- banner:
+  - navigation "グローバルナビ":
+    - list:
+      - listitem:
+        - link "ホーム":
+          - /url: ./
+- main:
+  - heading "サービス紹介" [level=1]
+  - link "詳細を見る":
+    - /url: /service
+- contentinfo
 ```
 
 保存先: `{OUTPUT_DIR}/data/{ラベル}/a11y-tree.txt`
