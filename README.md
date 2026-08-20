@@ -18,15 +18,27 @@ URL を渡すと、デジタル庁『ウェブアクセシビリティ導入ガ�
 
 ## インストール
 
-```bash
-# プロジェクトの .claude/skills/ に入れる
-npx a11y-shiken@latest init
+npm には公開していません。GitHub リポジトリから直接導入します。
 
-# 自分の環境すべてで使う（~/.claude/skills/）
-npx a11y-shiken@latest init --global
+### 1. `npx skills add`（推奨）
+
+```bash
+npx skills add taichiyam/a11y-shiken
 ```
 
+このリポジトリの `skills/a11y-shiken/` を読み取り、エージェントのスキルディレクトリに配置します。
 インストール後、Claude Code で `/a11y-shiken` と入力すると起動します。
+
+### 2. Claude Code plugin marketplace
+
+`/plugin` で更新まで管理したい場合はこちらを使います。
+
+```
+/plugin marketplace add taichiyam/a11y-shiken
+/plugin install a11y-shiken@a11y-shiken
+```
+
+プラグイン経由で入れた場合、起動は `/a11y-shiken:a11y-shiken` になります（プラグイン名で名前空間が付くため）。
 
 ### 動作要件
 
@@ -151,7 +163,6 @@ v0.1.0 は「動く最小構成」です。以下は未実装で、検討中の�
 |---|---|
 | 🔴 | **生成 AI 判定の精度・再現性の実測** |
 | 🔴 | Basic 認証・自己署名証明書への対応（`httpCredentials` / `ignoreHTTPSErrors`） |
-| 🟡 | Claude Code プラグインとしての配布 |
 | 🟡 | ページごとの並列実行（サブエージェント化） |
 | 🟢 | Google スプレッドシートへの直接出力 |
 
