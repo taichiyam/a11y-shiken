@@ -1,0 +1,18 @@
+{"overrides":[
+  {"criterion":"1.2.1","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"a11y-tree 全体および HTML に audio/video 要素が存在しない"},
+  {"criterion":"1.2.2","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"a11y-tree 全体および HTML に audio/video 要素が存在しない"},
+  {"criterion":"1.2.3","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"a11y-tree 全体および HTML に audio/video 要素が存在しない"},
+  {"criterion":"1.2.4","status":"not-applicable","details":"ライブの音声コンテンツなし","evidence":"a11y-tree 全体および HTML に audio/video 要素が存在しない"},
+  {"criterion":"1.2.5","status":"not-applicable","details":"映像コンテンツなし","evidence":"a11y-tree 全体および HTML に audio/video 要素が存在しない"},
+  {"criterion":"1.3.1","status":"fail","details":"電話番号入力欄にプログラム的なラベルがない（label 要素でなく span で隣接表示のみ）。同意チェックボックスが div で実装されフォームコントロールとして認識されない","evidence":"ツリー: - text: 電話番号 の直後が - textbox（accessible name なし）。HTML: <span class=\"field-title\">電話番号</span> と <input type=\"tel\" id=\"tel\">（label なし）、<div class=\"fake-checkbox\" id=\"agree\"></div>（ツリーに checkbox ロールが存在しない）"},
+  {"criterion":"1.3.2","status":"pass","details":"読み上げ順序は論理的（ヘッダー→ナビ→見出し→フォーム（ラベル→入力欄の順）→フッター）","evidence":"ツリーの出現順: link \"つばめ台コミュニティセンター\" → ナビの list → - heading \"お問い合わせ\" [level=1] → 各 text（ラベル）→ 直後に対応する textbox/combobox → フッターの paragraph（住所）"},
+  {"criterion":"1.4.5","status":"not-applicable","details":"img 要素なし（文字画像なし）","evidence":"HTML 全体に <img> タグが存在しない。図形は <svg aria-hidden=\"true\" focusable=\"false\">（検索ボタン内の装飾）のみ"},
+  {"criterion":"1.4.13","status":"not-applicable","details":"ホバー/フォーカスで追加表示されるコンテンツなし","evidence":"HTML に title 属性・ツールチップ・ドロップダウン等のホバー表示要素が存在せず、script 要素もない"},
+  {"criterion":"2.2.1","status":"not-applicable","details":"時間制限付きコンテンツなし","evidence":"HTML に meta refresh・script 要素が存在しない"},
+  {"criterion":"2.2.2","status":"not-applicable","details":"動く・自動更新するコンテンツなし","evidence":"HTML に marquee・カルーセル/スライダー類のマークアップ・script 要素が存在しない"},
+  {"criterion":"2.4.1","status":"fail","details":"スキップリンクがなく、ランドマーク要素も存在しない","evidence":"ツリーに banner / navigation / main / contentinfo で始まる行が存在しない。HTML はすべて <div class=\"site-header\"> <div class=\"site-nav\"> <div class=\"content\"> <div class=\"site-footer\"> で構成され、スキップリンクの <a> が存在しない"},
+  {"criterion":"2.4.4","status":"pass","details":"リンクテキストはいずれもリンク先を説明している","evidence":"ツリー: - link \"つばめ台コミュニティセンター\"、- link \"お問い合わせ\"、- link \"トップ\"、- link \"ご案内\"（「こちら」等の曖昧なリンクなし）"},
+  {"criterion":"3.1.1","status":"pass","details":"ページの言語が指定されている","evidence":"HTML: <html lang=\"ja\">"},
+  {"criterion":"3.1.2","status":"not-applicable","details":"ページ内に日本語以外の言語のまとまった文章なし","evidence":"HTML 本文はすべて日本語（外国語のパッセージが存在しない）"},
+  {"criterion":"4.1.2","status":"fail","details":"検索ボタンに accessible name がない。電話番号 textbox に accessible name がない。同意チェックボックスが role のない div で実装されツリーに現れない。送信ボタンの aria-label「フォーム」が可視テキスト「送信する」と一致せず名前が不適切","evidence":"ツリー: - button（名前なし）、- textbox（電話番号、名前なし）、- button \"フォーム\": 送信する。HTML: <button type=\"submit\"> 内が aria-hidden の svg のみ、<div class=\"fake-checkbox\" id=\"agree\"></div>（checkbox ロールなし）、<button type=\"submit\" class=\"submit-button\" aria-label=\"フォーム\">送信する</button>"}
+]}

@@ -1,0 +1,18 @@
+{"overrides":[
+  {"criterion":"1.2.1","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"a11y-tree 全体および HTML に audio/video 要素が存在しない"},
+  {"criterion":"1.2.2","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"a11y-tree 全体および HTML に audio/video 要素が存在しない"},
+  {"criterion":"1.2.3","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"a11y-tree 全体および HTML に audio/video 要素が存在しない"},
+  {"criterion":"1.2.4","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"a11y-tree 全体および HTML に audio/video 要素が存在しない"},
+  {"criterion":"1.2.5","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"a11y-tree 全体および HTML に audio/video 要素が存在しない"},
+  {"criterion":"1.3.1","status":"pass","details":"見出しは h1 のみで階層の飛びなし。全フォーム要素に accessible name があり、必須項目が名前に含まれている","evidence":"- heading \"お問い合わせ\" [level=1]。- textbox \"お名前（必須）\"、- textbox \"メールアドレス（必須）\"、- textbox \"電話番号（任意）\"、- combobox \"お問い合わせの種類（必須）\"、- textbox \"お問い合わせ内容（必須）\"、- checkbox \"個人情報の取り扱いに同意する（必須）\""},
+  {"criterion":"1.3.2","status":"pass","details":"DOM 順序（読み上げ順）が論理的","evidence":"ツリーが banner → navigation → main（h1 → 説明文 → フォーム項目 → 送信ボタン）→ contentinfo の順で出現"},
+  {"criterion":"1.4.5","status":"not-applicable","details":"画像なし（文字画像の使用なし）","evidence":"HTML に img 要素が存在しない（svg は装飾アイコンで aria-hidden=\"true\"）"},
+  {"criterion":"1.4.13","status":"not-applicable","details":"ホバー/フォーカスで追加表示されるコンテンツなし","evidence":"HTML に title 属性・ツールチップ要素・script 要素が存在しない"},
+  {"criterion":"2.2.1","status":"not-applicable","details":"時間制限付きコンテンツなし","evidence":"HTML に meta refresh・script 要素が存在しない"},
+  {"criterion":"2.2.2","status":"warning","details":"CSS ファイル（style.css）は検査対象外のため、CSS アニメーションの有無と一時停止手段を判定できない。要目視確認","evidence":""},
+  {"criterion":"2.4.1","status":"pass","details":"スキップリンクとランドマークが存在する","evidence":"HTML 先頭に <a class=\"skip-link\" href=\"#main\">本文へスキップ</a>、ツリーに - banner: / - navigation: / - main: / - contentinfo: が存在"},
+  {"criterion":"2.4.4","status":"pass","details":"すべてのリンクテキストがリンク先を説明している","evidence":"- link \"本文へスキップ\"、- link \"トップ\"、- link \"施設案内\"、- link \"お問い合わせ\"、- link \"つばめ台コミュニティセンター\"。曖昧なリンク名なし"},
+  {"criterion":"3.1.1","status":"pass","details":"ページの言語が指定されている","evidence":"<html lang=\"ja\">"},
+  {"criterion":"3.1.2","status":"not-applicable","details":"ページの主要言語（日本語）以外のフレーズが存在しない","evidence":"HTML 本文はすべて日本語で、他言語のパッセージ・フレーズが存在しない"},
+  {"criterion":"4.1.2","status":"pass","details":"すべての操作可能要素に role と accessible name がある","evidence":"- searchbox \"サイト内検索\"、- button \"検索\"、- textbox \"お名前（必須）\" ほか全フォーム要素に名前あり、- button \"送信する\"。HTML では各 input に label for=\"...\" が対応"}
+]}

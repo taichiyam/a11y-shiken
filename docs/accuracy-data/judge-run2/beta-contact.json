@@ -1,0 +1,17 @@
+{"overrides":[
+  {"criterion":"1.2.1","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"HTML 全体に audio/video 要素が存在しない"},
+  {"criterion":"1.2.2","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"HTML 全体に audio/video 要素が存在しない"},
+  {"criterion":"1.2.3","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"HTML 全体に audio/video 要素が存在しない"},
+  {"criterion":"1.2.4","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"HTML 全体に audio/video 要素が存在しない"},
+  {"criterion":"1.2.5","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"HTML 全体に audio/video 要素が存在しない"},
+  {"criterion":"1.3.1","status":"fail","details":"電話番号の入力欄に accessible name がなく、ラベルがプログラム的に関連付けられていない（HTML では label でなく span.field-title を使用）。また「個人情報の取り扱いに同意する」の同意チェックがフォームコントロールとしてツリーに存在しない（div による擬似チェックボックス）","evidence":"ツリー: `- text: 電話番号` の直後が名前なしの `- textbox`。HTML: `<span class=\"field-title\">電話番号</span>` と `<div class=\"fake-checkbox\" id=\"agree\"></div>`"},
+  {"criterion":"1.4.5","status":"not-applicable","details":"画像なし","evidence":"HTML 全体に img 要素が存在しない"},
+  {"criterion":"1.4.13","status":"warning","details":"ホバー/フォーカスで表示される追加コンテンツの有無は CSS の :hover 等でも実現され得るため、HTML のみでは判定不可。要目視確認","evidence":""},
+  {"criterion":"2.2.1","status":"not-applicable","details":"時間制限付きコンテンツなし","evidence":"head に meta refresh がなく、HTML 全体に script 要素が存在しない"},
+  {"criterion":"2.2.2","status":"warning","details":"CSS アニメーションの有無・一時停止手段は外部 CSS（style.css）に依存し、HTML のみでは判定不可。要目視確認","evidence":""},
+  {"criterion":"2.4.1","status":"fail","details":"ランドマーク（banner/navigation/main/contentinfo）が一切なく、スキップリンクも存在しない","evidence":"ツリーに banner/navigation/main/contentinfo で始まる行が存在しない。HTML はヘッダー・ナビ・本文・フッターがすべて div（div.site-header / div.site-nav / div.content / div.site-footer）で、本文先頭へのスキップリンク（a[href=\"#main\"] 等）もない"},
+  {"criterion":"2.4.4","status":"pass","details":"リンクテキストはいずれもリンク先を説明している","evidence":"ツリー: `- link \"つばめ台コミュニティセンター\"`、`- link \"お問い合わせ\"`、`- link \"トップ\"`、`- link \"ご案内\"`"},
+  {"criterion":"3.1.1","status":"pass","details":"ページの言語が設定されている","evidence":"HTML: `<html lang=\"ja\">`"},
+  {"criterion":"3.1.2","status":"not-applicable","details":"ページ内に日本語以外の言語の文言がない","evidence":"HTML 本文のテキストはすべて日本語（外国語のフレーズが存在しない）"},
+  {"criterion":"4.1.2","status":"fail","details":"検索ボタンに accessible name がない。送信ボタンは aria-label=\"フォーム\" が可視テキスト「送信する」を上書きしており名前が不適切。同意チェックは div 製で role がなく支援技術に伝わらない","evidence":"ツリー: 名前なしの `- button`（検索ボタン）、`- button \"フォーム\": 送信する`。HTML: `<button type=\"submit\" class=\"submit-button\" aria-label=\"フォーム\">送信する</button>`、`<div class=\"fake-checkbox\" id=\"agree\"></div>`"}
+]}

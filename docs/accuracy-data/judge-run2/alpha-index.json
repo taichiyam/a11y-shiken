@@ -1,0 +1,17 @@
+{"overrides":[
+  {"criterion":"1.2.1","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"HTML 全体に audio/video 要素が存在しない"},
+  {"criterion":"1.2.2","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"HTML 全体に audio/video 要素が存在しない"},
+  {"criterion":"1.2.3","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"HTML 全体に audio/video 要素が存在しない"},
+  {"criterion":"1.2.4","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"HTML 全体に audio/video 要素が存在しない"},
+  {"criterion":"1.2.5","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"HTML 全体に audio/video 要素が存在しない"},
+  {"criterion":"1.3.1","status":"pass","details":"見出し階層がレベルを飛ばさず出現し、フォームコントロールに accessible name がある","evidence":"ツリーの見出しが出現順に [level=1]→[level=2]→[level=3]（`- heading \"つばめ台コミュニティセンターへようこそ\" [level=1]`、`- heading \"お知らせ\" [level=2]`、`- heading \"部屋を予約する\" [level=3]` 等）。`- searchbox \"サイト内検索\"` に名前あり"},
+  {"criterion":"1.4.5","status":"pass","details":"ページ内の画像は建物の外観イラスト1点のみで、文字画像の使用は見られない","evidence":"HTML: `<img src=\"../assets/hero.svg\" alt=\"つばめ台コミュニティセンターの外観。本館と別館の2棟の建物があり、前庭には木と花壇がある\">`（alt は情景の説明で、文字画像を示す内容ではない）"},
+  {"criterion":"1.4.13","status":"warning","details":"ホバー/フォーカスで表示される追加コンテンツの有無は CSS の :hover 等でも実現され得るため、HTML のみでは判定不可。要目視確認","evidence":""},
+  {"criterion":"2.2.1","status":"not-applicable","details":"時間制限付きコンテンツなし","evidence":"head に meta refresh がなく、HTML 全体に script 要素が存在しない"},
+  {"criterion":"2.2.2","status":"warning","details":"CSS アニメーションの有無・一時停止手段は外部 CSS（style.css）に依存し、HTML のみでは判定不可。要目視確認","evidence":""},
+  {"criterion":"2.4.1","status":"pass","details":"ランドマークが揃っており、スキップリンクも先頭にある","evidence":"ツリー: `- banner:`、`- navigation:`、`- main:`、`- contentinfo:` が存在。先頭に `- link \"本文へスキップ\":` `/url: \"#main\"`（HTML: `<a class=\"skip-link\" href=\"#main\">本文へスキップ</a>` と `<main id=\"main\">`）"},
+  {"criterion":"2.4.4","status":"pass","details":"リンクテキストはいずれもリンク先の内容を具体的に説明している","evidence":"ツリー: `- link \"貸室の一覧と利用料金を見る\"`、`- link \"開館時間と休館日を見る\"`、`- link \"お問い合わせフォームを開く\"`、`- link \"つばめ台コミュニティセンター公式SNSアカウント\"` 等。「こちら」のような曖昧なリンクなし"},
+  {"criterion":"3.1.1","status":"pass","details":"ページの言語が設定されている","evidence":"HTML: `<html lang=\"ja\">`"},
+  {"criterion":"3.1.2","status":"pass","details":"本文中の英語フレーズに lang 属性が付与されている","evidence":"HTML: `<span lang=\"en\">A place for everyone in Tsubamedai.</span>`"},
+  {"criterion":"4.1.2","status":"pass","details":"すべてのインタラクティブ要素に role と accessible name がある。aria-hidden はテキスト併記の装飾 SVG のみで、誤った隠蔽はない","evidence":"ツリー: `- searchbox \"サイト内検索\"`、`- button \"検索\"`、各 link に名前あり。HTML の aria-hidden は `<svg aria-hidden=\"true\" ...>`（隣にテキスト「検索」/ aria-label あり）のみ"}
+]}
