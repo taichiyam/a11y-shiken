@@ -21,8 +21,8 @@ with axe-core, Playwright, and an LLM, then rolls the results up into the 17 bas
 web accessibility guidebook, emitting an Excel checklist and Markdown reports (Japanese output only).
 Its governing rule is that a false pass is far worse than a false failure: an LLM verdict that cannot quote evidence from the
 rendered accessibility tree or HTML is demoted to "unverified" by the merge script rather than by prompt instruction,
-a check that covers only part of a success criterion never yields a pass, and a baseline item is never rounded up to "OK"
-while any of its criteria remain unverified. It reports; it does not auto-fix.
+an axe-core pass on a criterion its rules only partially cover is recorded as unverified instead of as conformance,
+and a baseline item is never rounded up to "OK" while any of its criteria remain unverified. It reports; it does not auto-fix.
 
 > ## ⚠️ v0.1.0 — ベータ版です
 >
@@ -50,7 +50,11 @@ while any of its criteria remain unverified. It reports; it does not auto-fix.
 |---|---|
 | **証拠必須ガード** | 生成 AI の「適合」「不適合」「該当なし」のうち、証拠（アクセシビリティツリーや HTML から引ける記述）が空のものを機械的に「未確認」へ降格する。「このページに動画はありません」のような該当なし判定にも同じく証拠を要求する |
 | **「適合」への上書き制限** | 機械検査の結果を生成 AI が「適合」で上書きするのは、証拠がある場合しか通さない。証拠つきで判定が食い違ったときは、上書きしたうえで矛盾として記録に残す |
-| **カバレッジガード** | 達成基準の一部しか検証していない検査は、問題が見つからなくても合格を出さない。axe-core のルールの pass も、その基準をどこまでカバーしているかを項目ごとに監査したうえで扱う（現時点では 55 項目すべてが「部分的」） |
+| **カバレッジガード** | axe-core の pass を適合の根拠にしてよいかを、達成基準ごとに監査して決めている。基準の一部の条件しか見ていないルールの pass は、適合ではなく「未確認」に倒す（現時点では 55 項目すべてがこの扱い）。不適合の検出力は落としません |
+
+これとは別に、**検証範囲が達成基準の一部にとどまる専用検査**（フォーカスの可視化、非テキストのコントラスト、ステータスメッセージなど）も、
+問題が見つからなかったことを合格の根拠にしません。逆に、Visual / Interactive / 生成 AI が**証拠つきで出した合格は「適合」になります。**
+上のガードが止めているのは「根拠が基準のごく一部にしか及ばない合格」であって、合格そのものではありません。
 
 同じ理由から、**検出した問題を自動で修正する機能は持ちません。** 直し方の提案はレポートに書きますが、
 適用するかどうかの判断は人に残します。判定を保守側に倒す設計と、コードを自動で書き換える機能は相性が悪いためです。
@@ -111,8 +115,9 @@ WCAG 2.2 の 55 項目を渡されても、どれが致命的でどれが後回�
 正解の違反 21 件のうち 13 件は、そもそも判定の対象になりませんでした。
 機械検査と統合した最終的なチェックシートで「修正あり」になるのは 21 件中 14 件です。
 
-また上のガードは、この測定では 1 件も作動していません（証拠のない判定自体が出なかったため）。
-**この実測はガードが効くことを実証したものではありません。**
+なお、上のガードのうち**証拠必須ガードと「適合」への上書き制限**は、この測定では 1 件も作動していません
+（生成 AI の判定 173 件すべてに証拠が付いていたため）。**この実測は、この 2 つのガードが効くことを実証したものではありません。**
+レポートが監査したのもこの 2 つ（と判定矛盾フラグ）で、カバレッジガードは監査の対象外です。
 
 そして数値はいずれも、**特定の盲検プロトコルという条件下で観測されたもの**です。
 本番のパイプラインは生成 AI に渡す入力が異なり、実サイトでは測っていません。
