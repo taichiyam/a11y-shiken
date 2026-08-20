@@ -24,7 +24,7 @@ best-practice タグのルール（`region` / `landmark-one-main` / `heading-ord
 | ID | SC | レベル | ページ | 箇所（セレクタ） | 仕込み内容 | 期待判定 | 検出経路 |
 |----|----|--------|--------|------------------|-----------|----------|----------|
 | NG-01 | 2.4.1 | A | 全ページ | `body` 直下の文書構造 | `header` / `nav` / `main` / `footer` を `div` に置換しランドマークなし。スキップリンクもなし | 不適合 | AI判定・目視（各ページに h1 があるため axe `bypass` は発火しない） |
-| NG-02 | 2.4.7 | AA | 全ページ | `style.css` の `:focus` | `outline: none` でフォーカスインジケーターを消去 | 不適合 | 目視（キーボード操作で確認）。`a11y-interactive-test.ts` の 2.4.7 チェックは computed `outline` ショートハンド（`rgb(...) none 0px`）を文字列 `"none"` と比較する実装のため `outline: none` を検出できず pass 判定になる（2026-08-18 実測） |
+| NG-02 | 2.4.7 | AA | 全ページ | `style.css` の `:focus` | `outline: none` でフォーカスインジケーターを消去 | 不適合 | Interactive: `testFocusVisible`（fail。ng 全3ページで実測済み）。旧実装は computed `outline` ショートハンド（`rgb(...) none 0px`）を文字列 `"none"` と比較していたため検出できなかったが、issue #10 でフォーカス前後の computed style 差分（outline / box-shadow / 背景色・枠線色の変化）による判定に修正済み（常時付与の装飾 box-shadow では誤カウントしない） |
 | NG-03 | 4.1.2 | A | 全ページ | ヘッダー検索ボタン `.search-form button` | 虫眼鏡アイコンのみでアクセシブルネームなし | 不適合 | axe: `button-name` |
 | NG-04 | 3.2.3 | AA | contact.html | `.site-nav` | ナビゲーションの順序・ラベルが他ページと異なる（「施設案内」→「ご案内」、並び順も変更） | 不適合 | AI判定・目視（3ページの比較が必要） |
 
@@ -80,9 +80,14 @@ ok 版は ng 版と同一のページ構成・レイアウトのまま、上記�
 全入力欄に `label` + `autocomplete` / 「（必須）」のテキスト表記 / ネイティブ `checkbox` + `label` /
 ページごとに固有の `title` / 3ページで一貫したナビゲーション。
 
-**期待結果**: ok 版は axe violations 0 件、Visual テストの fail / 具体指摘 0 件（実測済み）。
-なお Visual テストの 1.3.5 / 3.3.1 / 3.3.2 / 3.3.3 / 3.3.7 は「フォーム要素が存在するページでは常に目視確認を促す warning を出す」設計のため、
-ヘッダーに検索フォームを持つ本サイトでは ok 版でもこの汎用 warning は出る（違反検出ではない）。
+**期待結果**: ok 版は axe violations 0 件、Visual / Interactive テストの fail / 具体指摘 0 件（実測済み）。
+なお以下のチェックは「検証しきれない pass を出さない」設計（issue #10）のため、ok 版でも warning（未確認）が出る（違反検出ではない）:
+
+- Visual の 1.3.5 / 3.3.1 / 3.3.2 / 3.3.3 / 3.3.7: フォーム要素が存在するページでは常に目視確認を促す warning
+- Visual の 1.4.11（境界線のみの検証）/ 1.3.1（見出し階層のみの検証）/ 4.1.3（属性の存在検査のみ）: 問題未検出でも常に warning
+- Interactive の 2.4.7: フォーカス前後のスタイル変化は確認できても視認性（コントラスト・太さ）は自動検証できないため、fail でない場合は warning
+- Interactive の 1.3.4 / 1.4.4: スクリーンショット取得 + 目視確認前提の warning
+- Interactive の 2.4.3: index ページ（ok / ng 共通）はレイアウト起因で「順序が不自然な可能性 1 件」の warning が出る（位置ヒューリスティックの既存の癖であり、違反検出ではない）
 
 ## 実測結果（2026-08-18）
 
@@ -97,6 +102,11 @@ axe-core（`@axe-core/playwright`、WCAG タグのみ）をローカル配信し
 
 Visual テスト（`a11y-visual-test.ts`）では ng 版で `checkHeadingStructure`（h1→h3 スキップ）、`checkTargetSize`（`.sns-link` 18×18px）、
 `checkLabelInName`（送信ボタン）、`checkNonTextContrast`（フォーム枠線 1.36:1）が検出されることを確認済み。
+
+issue #10 の false pass 是正後（2026-08-18 再実測）: Interactive テスト（`a11y-interactive-test.ts`）の 2.4.7 `testFocusVisible` が
+ng 全3ページで fail（サンプル全要素でフォーカスによるスタイル変化なし）を検出。ok 版は全3ページとも fail 0 件で、
+3.2.1 / 3.2.2 は URL・DOM スナップショット比較 + ナビゲーション監視のうえ pass（contact は tel / select / checkbox を含む
+5 フィールドを検査）、2.4.7 は「スタイル変化確認済み・視認性は目視確認」の warning となる。
 
 ## SC カバレッジ
 
