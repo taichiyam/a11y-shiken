@@ -204,6 +204,7 @@ export interface WcagCriterion {
   axeTags: string[]; // マッチ対象の axe-core タグ (e.g. ["wcag111"])
   // axe-core のルール群が、この達成基準の要求をどこまでカバーしているか。
   // - "full":    ルール群が達成基準の要求をほぼ満たして検証している。pass → 適合
+  //              **現時点で該当する基準は 1 つもない（55 項目すべて "partial"）**
   // - "partial": 達成基準の一部の条件しか見ていない（特定要素の有無だけ、値の妥当性だけ 等）。
   //              または axe-core に実質的なルールが無い。pass → 要確認（未確認表示）に倒す
   // 「間違った合格は、間違った不合格よりはるかに悪い」ため、判断に迷う場合は "partial" を選ぶ。
@@ -215,8 +216,13 @@ export interface WcagCriterion {
 export type AxeCoverage = "full" | "partial";
 
 // axeCoverage の判定根拠は docs/how-it-works.md 第5章「各基準が何を検証し、何を検証していないか」に
-// 55 項目ぶんまとめてある。"full" は 1.4.3（color-contrast がコントラスト比そのものを計測し、
-// 計測できない場合は axe 側が incomplete に倒す）のみで、残る 54 項目は "partial"。
+// 55 項目ぶんまとめてある。
+//
+// **現時点で "full" は 0 項目。axe-core の pass だけを根拠に適合と判定する基準は存在しない。**
+// 唯一の候補だった 1.4.3 も、`color-contrast` が測定できるのは CSS で描画されたテキストだけで、
+// 達成基準が対象に含む「画像化されたテキスト」を検証できないため "partial" とした（issue #31 レビュー指摘）。
+// 型と分岐は将来に備えて残してある。axe-core 側の改善や新ルールで達成基準の全体を検証できる
+// ようになった基準が出たら、根拠を添えて "full" にする。
 const WCAG_CRITERIA: WcagCriterion[] = [
   // --- 1. 知覚可能 (Perceivable) ---
   {
@@ -354,10 +360,10 @@ const WCAG_CRITERIA: WcagCriterion[] = [
     description:
       "テキストと背景のコントラスト比が4.5:1以上（大文字テキストは3:1以上）",
     axeTags: ["wcag143"],
-    // color-contrast は達成基準の要求そのもの（コントラスト比）を計測する。
-    // 背景画像・グラデーション等で計測できない場合は axe-core 側が incomplete に倒すため、
-    // pass は「計測して基準を満たした」ことを意味する
-    axeCoverage: "full",
+    // color-contrast はコントラスト比そのものを計測するが、対象は CSS で描画されたテキストに限られる。
+    // 達成基準は「画像化されたテキスト」も対象に含むため、低コントラストの文字画像が同居していても
+    // 通常テキストの pass だけで基準全体が適合になってしまう。よって "partial"
+    axeCoverage: "partial",
   },
   {
     id: "1.4.4",
@@ -859,15 +865,16 @@ function joinNotes(a: string, b: string): string {
 
 // 遷移ルール: 「安全側への遷移は自由、危険側への遷移は制限」
 // - 適合 → 不適合、任意 → 未確認 は無条件で許可（従来どおり）
-// - 不適合 → 適合 の降格は、上書き元の判定に証拠がある場合のみ許可する。
-//   許可・却下のいずれでも矛盾フラグ（conflict）を立て、備考に経緯を残す
+// - 任意 → 適合 の上書きは、上書き元の判定に証拠がある場合のみ許可する。
+//   証拠がない場合は現在の判定を維持し、備考に却下の経緯を残す。
+//   このうち「不適合 → 適合」は、許可・却下のいずれでも矛盾フラグ（conflict）を立てる
 function applyOverrideStatus(
   current: CriterionResult,
   proposed: { status: "適合" | "不適合"; source: string; notes: string; evidence?: string }
 ): CriterionResult {
-  if (proposed.status === "不適合" || current.status !== "不適合") {
+  if (proposed.status === "不適合") {
     return {
-      status: proposed.status,
+      status: "不適合",
       source: proposed.source,
       // 既に矛盾が起きている場合は「⚠️ 判定矛盾」の経緯を備考から消さない
       notes: current.conflict ? joinNotes(current.notes, proposed.notes) : proposed.notes,
@@ -875,25 +882,44 @@ function applyOverrideStatus(
     };
   }
 
-  // 不適合 → 適合 の降格を試みている
-  if (hasEvidence(proposed.evidence)) {
+  // ここから先は「適合」への上書き。「不適合 → 適合」は判定元の意見が割れた状態なので矛盾として記録する
+  const demotesFailure = current.status === "不適合";
+
+  if (!hasEvidence(proposed.evidence)) {
+    // 証拠のない「適合」は通さず、現在の判定を維持する。
+    // current をそのまま返すため、axe-core カバレッジ降格の説明（coverageNote）も維持される
+    if (demotesFailure) {
+      return {
+        ...current,
+        notes: joinNotes(
+          current.notes,
+          `⚠️ 判定矛盾: ${proposed.source}は適合と判定したが、証拠がないため${current.source}の不適合を維持`
+        ),
+        conflict: true,
+      };
+    }
     return {
-      status: "適合",
-      source: proposed.source,
+      ...current,
       notes: joinNotes(
-        `⚠️ 判定矛盾: ${current.source}の不適合を${proposed.source}が適合で上書き`,
-        proposed.notes
+        current.notes,
+        `${proposed.source}は適合と判定したが、証拠がないため「${getDisplayLabel(current.status)}」を維持`
       ),
-      conflict: true,
     };
   }
+
   return {
-    ...current,
-    notes: joinNotes(
-      current.notes,
-      `⚠️ 判定矛盾: ${proposed.source}は適合と判定したが、証拠がないため${current.source}の不適合を維持`
-    ),
-    conflict: true,
+    status: "適合",
+    source: proposed.source,
+    notes: demotesFailure
+      ? joinNotes(
+          `⚠️ 判定矛盾: ${current.source}の不適合を${proposed.source}が適合で上書き`,
+          proposed.notes
+        )
+      : // 既に矛盾が起きている場合は「⚠️ 判定矛盾」の経緯を備考から消さない
+        current.conflict
+        ? joinNotes(current.notes, proposed.notes)
+        : proposed.notes,
+    conflict: demotesFailure || current.conflict,
   };
 }
 
