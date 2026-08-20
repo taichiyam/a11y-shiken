@@ -1,11 +1,11 @@
 {
   "source": "デジタル庁 ウェブアクセシビリティ導入ガイドブック 2024-03-29版 §3.1・§3.2",
-  "url": "https://a11yc.com/city-komaru/practice/?criteria=1.1.1a_ok",
-  "testDate": "2026-08-18 09:00",
+  "url": "http://127.0.0.1:8765/ok/facility.html",
+  "testDate": "2026-08-21 02:09",
   "summary": {
-    "要修正": 1,
-    "一部未確認": 10,
-    "確認OK": 6,
+    "要修正": 0,
+    "一部未確認": 5,
+    "確認OK": 12,
     "判定対象外": 0
   },
   "items": [
@@ -21,7 +21,7 @@
           "status": "適合",
           "name": "音声の制御",
           "source": "自動判定(Visual)",
-          "notes": ""
+          "notes": "自動再生する音声がない; 証拠: ok/facility.html に `<audio>` / `<video>` 要素が存在しない; 証拠: 自動再生メディア要素なし"
         }
       ],
       "counts": {
@@ -43,7 +43,7 @@
           "status": "適合",
           "name": "キーボードトラップなし",
           "source": "自動判定(Interactive)",
-          "notes": ""
+          "notes": "証拠: キーボードトラップは検出されませんでした。操作可能な要素 8 個のうち 9 個（113%）を巡回しました。"
         }
       ],
       "counts": {
@@ -57,21 +57,21 @@
       "no": 3,
       "severity": "重大",
       "title": "光の点滅は危険",
-      "status": "一部未確認",
+      "status": "確認OK",
       "criteria": [
         {
           "id": "2.3.1",
           "inScope": true,
-          "status": "目視確認",
+          "status": "適合",
           "name": "3回の閃光、又は閾値以下",
-          "source": "要目視確認",
-          "notes": ""
+          "source": "自動判定(Claude)",
+          "notes": "閃光を伴うコンテンツがない; 証拠: ok/facility.html に `<video>` 要素がなく、style.css に `animation` / `@keyframes` の宣言も存在しない"
         }
       ],
       "counts": {
-        "confirmed": 0,
+        "confirmed": 1,
         "failed": 0,
-        "unconfirmed": 1,
+        "unconfirmed": 0,
         "outOfScope": 0
       }
     },
@@ -79,21 +79,21 @@
       "no": 4,
       "severity": "重大",
       "title": "自動でコンテンツを切り替えない",
-      "status": "一部未確認",
+      "status": "確認OK",
       "criteria": [
         {
           "id": "2.2.2",
           "inScope": true,
-          "status": "目視確認",
+          "status": "適合",
           "name": "一時停止、停止、非表示",
-          "source": "要目視確認",
-          "notes": ""
+          "source": "自動判定(Claude)",
+          "notes": "自動的に動く・点滅する・自動更新されるコンテンツがない; 証拠: style.css に `animation` / `@keyframes` / `transition` の宣言が存在せず、HTML に `<marquee>` も `<script>` もない"
         }
       ],
       "counts": {
-        "confirmed": 0,
+        "confirmed": 1,
         "failed": 0,
-        "unconfirmed": 1,
+        "unconfirmed": 0,
         "outOfScope": 0
       }
     },
@@ -108,8 +108,8 @@
           "inScope": true,
           "status": "適合",
           "name": "非テキストコンテンツ",
-          "source": "自動判定",
-          "notes": ""
+          "source": "自動判定(Claude)",
+          "notes": "ギャラリーの3枚の画像すべてに内容を説明する代替テキストがある; 証拠: ツリー `- img \"多目的ホールの内観。ステージの前に椅子が並んでいる\"` / `- img \"音楽スタジオの内観。ピアノと譜面台が置かれている\"` / `- img \"調理実習室の内観。調理台とコンロ、吊り棚がある\"`"
         }
       ],
       "counts": {
@@ -128,25 +128,25 @@
         {
           "id": "2.1.1",
           "inScope": true,
-          "status": "目視確認",
+          "status": "適合",
           "name": "キーボード",
-          "source": "要目視確認",
-          "notes": ""
+          "source": "自動判定(Claude)",
+          "notes": "操作要素はネイティブの a / button / input のみで、独自のクリックハンドラを持つ要素がない; 証拠: ok/facility.html に `<script>` 要素・`onclick` 属性が存在せず、ツリーの操作要素は `- link` / `- button \"検索\"` / `- searchbox \"サイト内検索\"` のみ"
         },
         {
           "id": "2.4.3",
           "inScope": true,
-          "status": "目視確認",
+          "status": "適合",
           "name": "フォーカス順序",
-          "source": "要目視確認",
-          "notes": ""
+          "source": "自動判定(Interactive)",
+          "notes": "証拠: 8個の要素のフォーカス順序がDOM順序に従っており、論理的です。"
         },
         {
           "id": "2.4.7",
           "inScope": true,
-          "status": "適合",
+          "status": "目視確認",
           "name": "フォーカスの可視化",
-          "source": "自動判定(Interactive)",
+          "source": "要目視確認",
           "notes": ""
         },
         {
@@ -155,7 +155,7 @@
           "status": "適合",
           "name": "フォーカス時",
           "source": "自動判定(Interactive)",
-          "notes": ""
+          "notes": "証拠: 8個の要素でフォーカス前後の URL・DOM に変化がないことを確認しました。"
         },
         {
           "id": "3.2.2",
@@ -163,13 +163,13 @@
           "status": "適合",
           "name": "入力時",
           "source": "自動判定(Interactive)",
-          "notes": ""
+          "notes": "証拠: 1個のフォームフィールド（テキスト入力・select・checkbox / radio）で値の入力・変更前後の URL・DOM に変化がないことを確認しました。"
         }
       ],
       "counts": {
-        "confirmed": 3,
+        "confirmed": 4,
         "failed": 0,
-        "unconfirmed": 2,
+        "unconfirmed": 1,
         "outOfScope": 0
       }
     },
@@ -177,29 +177,29 @@
       "no": 7,
       "severity": "必須",
       "title": "操作に制限時間を設けない",
-      "status": "一部未確認",
+      "status": "確認OK",
       "criteria": [
         {
           "id": "2.2.1",
           "inScope": true,
-          "status": "目視確認",
+          "status": "適合",
           "name": "タイミング調整可能",
-          "source": "要目視確認",
-          "notes": ""
+          "source": "自動判定(Claude)",
+          "notes": "制限時間のあるコンテンツがない; 証拠: ok/facility.html に `<meta http-equiv=\"refresh\">` も `<script>` も存在しない"
         },
         {
           "id": "2.2.2",
           "inScope": true,
-          "status": "目視確認",
+          "status": "適合",
           "name": "一時停止、停止、非表示",
-          "source": "要目視確認",
-          "notes": ""
+          "source": "自動判定(Claude)",
+          "notes": "自動的に動く・点滅する・自動更新されるコンテンツがない; 証拠: style.css に `animation` / `@keyframes` / `transition` の宣言が存在せず、HTML に `<marquee>` も `<script>` もない"
         }
       ],
       "counts": {
-        "confirmed": 0,
+        "confirmed": 2,
         "failed": 0,
-        "unconfirmed": 2,
+        "unconfirmed": 0,
         "outOfScope": 0
       }
     },
@@ -207,37 +207,37 @@
       "no": 8,
       "severity": "必須",
       "title": "単一の表現だけで情報を伝えない",
-      "status": "一部未確認",
+      "status": "確認OK",
       "criteria": [
         {
           "id": "1.3.1",
           "inScope": true,
           "status": "適合",
           "name": "情報及び関係性",
-          "source": "自動判定(Visual)",
-          "notes": ""
+          "source": "自動判定(Claude)",
+          "notes": "見出し階層が h1→h2 で飛びがなく、表は caption と見出しセルで行・列の関係が伝わる; 証拠: ツリー `- table \"貸室一覧（定員・利用料金・主な設備）\":` 配下に `- columnheader \"部屋名\"` と `- rowheader \"多目的ホール\"`、HTML `<th scope=\"col\">` / `<th scope=\"row\">`"
         },
         {
           "id": "1.3.3",
           "inScope": true,
-          "status": "目視確認",
+          "status": "適合",
           "name": "感覚的な特徴",
-          "source": "要目視確認",
-          "notes": ""
+          "source": "自動判定(Claude)",
+          "notes": "形状・位置・音などの感覚的特徴のみに依存した説明文がない; 証拠: 本文テキスト（`- paragraph: 予約は利用日の3か月前から、窓口または電話で受け付けています。` 等）に「右の表」「丸いアイコン」等の感覚依存の指示が含まれない"
         },
         {
           "id": "1.4.1",
           "inScope": true,
-          "status": "目視確認",
+          "status": "適合",
           "name": "色の使用",
-          "source": "要目視確認",
-          "notes": ""
+          "source": "自動判定(Claude)",
+          "notes": "本文リンクは下線で区別されており、表の情報も文字で読み取れる; 証拠: style.css `.content a { color: #1d4ed8; text-decoration: underline; }`、表のセルは `- cell \"1,200円\"` のように文字で値を持つ"
         }
       ],
       "counts": {
-        "confirmed": 1,
+        "confirmed": 3,
         "failed": 0,
-        "unconfirmed": 2,
+        "unconfirmed": 0,
         "outOfScope": 0
       }
     },
@@ -245,37 +245,37 @@
       "no": 9,
       "severity": "必須",
       "title": "読み上げ順序が意味の通る順になっている",
-      "status": "一部未確認",
+      "status": "確認OK",
       "criteria": [
         {
           "id": "1.3.1",
           "inScope": true,
           "status": "適合",
           "name": "情報及び関係性",
-          "source": "自動判定(Visual)",
-          "notes": ""
+          "source": "自動判定(Claude)",
+          "notes": "見出し階層が h1→h2 で飛びがなく、表は caption と見出しセルで行・列の関係が伝わる; 証拠: ツリー `- table \"貸室一覧（定員・利用料金・主な設備）\":` 配下に `- columnheader \"部屋名\"` と `- rowheader \"多目的ホール\"`、HTML `<th scope=\"col\">` / `<th scope=\"row\">`"
         },
         {
           "id": "1.3.2",
           "inScope": true,
-          "status": "目視確認",
+          "status": "適合",
           "name": "意味のある順序",
-          "source": "要目視確認",
-          "notes": ""
+          "source": "自動判定(Claude)",
+          "notes": "DOM順（スキップリンク→ヘッダー→ナビ→main→フッター）が視覚的な提示順と一致している; 証拠: ツリーが `- link \"本文へスキップ\"` → `- banner:` → `- navigation:` → `- main:` → `- contentinfo:` の順に並ぶ"
         },
         {
           "id": "2.4.3",
           "inScope": true,
-          "status": "目視確認",
+          "status": "適合",
           "name": "フォーカス順序",
-          "source": "要目視確認",
-          "notes": ""
+          "source": "自動判定(Interactive)",
+          "notes": "証拠: 8個の要素のフォーカス順序がDOM順序に従っており、論理的です。"
         }
       ],
       "counts": {
-        "confirmed": 1,
+        "confirmed": 3,
         "failed": 0,
-        "unconfirmed": 2,
+        "unconfirmed": 0,
         "outOfScope": 0
       }
     },
@@ -283,31 +283,31 @@
       "no": 10,
       "severity": "必須",
       "title": "見出し要素でセクションを表現する",
-      "status": "一部未確認",
+      "status": "確認OK",
       "criteria": [
         {
           "id": "1.3.1",
           "inScope": true,
           "status": "適合",
           "name": "情報及び関係性",
-          "source": "自動判定(Visual)",
-          "notes": ""
+          "source": "自動判定(Claude)",
+          "notes": "見出し階層が h1→h2 で飛びがなく、表は caption と見出しセルで行・列の関係が伝わる; 証拠: ツリー `- table \"貸室一覧（定員・利用料金・主な設備）\":` 配下に `- columnheader \"部屋名\"` と `- rowheader \"多目的ホール\"`、HTML `<th scope=\"col\">` / `<th scope=\"row\">`"
         },
         {
           "id": "2.4.6",
           "inScope": true,
-          "status": "目視確認",
+          "status": "適合",
           "name": "見出し及びラベル",
-          "source": "要目視確認",
-          "notes": ""
+          "source": "自動判定(Claude)",
+          "notes": "見出しと表の caption が内容を説明している; 証拠: ツリー `- heading \"貸室のご案内\" [level=2]` / `- heading \"開館時間・休館日\" [level=2]` / `- heading \"利用料金の減免について\" [level=2]` / `- caption: 貸室一覧（定員・利用料金・主な設備）`"
         },
         {
           "id": "2.4.1",
           "inScope": true,
           "status": "適合",
           "name": "ブロックスキップ",
-          "source": "自動判定",
-          "notes": ""
+          "source": "自動判定(Claude)",
+          "notes": "本文へのスキップリンクとランドマークが用意されている; 証拠: ツリー `- link \"本文へスキップ\": /url: \"#main\"` と `- banner:` / `- navigation:` / `- main:` / `- contentinfo:`"
         },
         {
           "id": "2.4.10",
@@ -316,9 +316,9 @@
         }
       ],
       "counts": {
-        "confirmed": 2,
+        "confirmed": 3,
         "failed": 0,
-        "unconfirmed": 1,
+        "unconfirmed": 0,
         "outOfScope": 1
       }
     },
@@ -334,7 +334,7 @@
           "status": "要確認",
           "name": "コントラスト（最低限）",
           "source": "要目視確認",
-          "notes": "Elements must meet minimum color contrast ratio thresholds"
+          "notes": "axe-core は達成基準の一部のみ検証（color-contrast）。この pass だけでは適合と判定していません"
         }
       ],
       "counts": {
@@ -348,21 +348,21 @@
       "no": 12,
       "severity": "必須",
       "title": "拡大縮小しても情報が読み取れる",
-      "status": "要修正",
+      "status": "一部未確認",
       "criteria": [
         {
           "id": "1.4.4",
           "inScope": true,
-          "status": "不適合",
+          "status": "要確認",
           "name": "テキストのサイズ変更",
-          "source": "自動判定(Interactive)",
-          "notes": "200%ズーム時にテキストの切れが検出されました。overflow: hidden による切り取りが発生しています。"
+          "source": "要目視確認",
+          "notes": "axe-core は達成基準の一部のみ検証（meta-viewport）。この pass だけでは適合と判定していません"
         }
       ],
       "counts": {
         "confirmed": 0,
-        "failed": 1,
-        "unconfirmed": 0,
+        "failed": 0,
+        "unconfirmed": 1,
         "outOfScope": 0
       }
     },
@@ -377,8 +377,8 @@
           "inScope": true,
           "status": "適合",
           "name": "ラベル又は説明",
-          "source": "自動判定",
-          "notes": ""
+          "source": "自動判定(Claude)",
+          "notes": "入力欄にラベルが関連付けられている; 証拠: HTML `<label class=\"visually-hidden\" for=\"site-search\">サイト内検索</label>` + `<input id=\"site-search\">`、ツリー `- searchbox \"サイト内検索\"`"
         },
         {
           "id": "4.1.1",
@@ -390,8 +390,8 @@
           "inScope": true,
           "status": "適合",
           "name": "名前（name）、役割（role）及び値（value）",
-          "source": "自動判定",
-          "notes": ""
+          "source": "自動判定(Claude)",
+          "notes": "すべての操作要素がネイティブ要素で、ツリー上に役割と名前が現れている; 証拠: ツリー `- searchbox \"サイト内検索\"` / `- button \"検索\"` / `- link \"お問い合わせフォーム\"`（名前のない操作要素なし）"
         }
       ],
       "counts": {
@@ -412,8 +412,8 @@
           "inScope": true,
           "status": "適合",
           "name": "ページタイトル",
-          "source": "自動判定",
-          "notes": ""
+          "source": "自動判定(Claude)",
+          "notes": "ページの内容を説明するタイトルが設定されている; 証拠: HTML `<title>施設案内 | つばめ台コミュニティセンター</title>`"
         }
       ],
       "counts": {
@@ -434,8 +434,8 @@
           "inScope": true,
           "status": "適合",
           "name": "リンクの目的（コンテキスト内）",
-          "source": "自動判定",
-          "notes": ""
+          "source": "自動判定(Claude)",
+          "notes": "リンクテキスト単独で目的を判別できる; 証拠: ツリー `- link \"お問い合わせフォーム\"` / `- link \"施設案内\"` / `- link \"トップ\"`（「こちら」等の曖昧なリンクテキストなし）"
         }
       ],
       "counts": {

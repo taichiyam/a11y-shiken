@@ -448,6 +448,8 @@ URL: https://example.com
 | `ng/index.html` | 確認OK 19 → 11、未確認 32 → 40、修正あり 4（変化なし） |
 | `ng/contact.html` | 確認OK 20 → 12、未確認 30 → 38、修正あり 5（変化なし） |
 
+この表の件数は、**いずれも生成 AI 判定を入れずに**（axe-core + Visual + Interactive だけで）検査した実測値です。生成 AI 判定まで含めた通常の実行結果は [examples/site-report/](../examples/site-report/) にあります。
+
 減った分はすべて「axe-core の部分的な pass だけを根拠にしていた確認OK」で、**不適合の件数は 1 件も減っていません。** ng 版では、ground truth に仕込んだ違反が「確認OK」に埋もれていた次の項目が「未確認」に変わりました。
 
 - 1.3.5（`autocomplete` 欠落）— `autocomplete-valid` の pass で覆われていた
