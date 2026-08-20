@@ -1,0 +1,17 @@
+{"overrides":[
+  {"criterion":"1.2.1","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"HTML 全体に audio/video 要素が存在しない"},
+  {"criterion":"1.2.2","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"HTML 全体に audio/video 要素が存在しない"},
+  {"criterion":"1.2.3","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"HTML 全体に audio/video 要素が存在しない"},
+  {"criterion":"1.2.4","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"HTML 全体に audio/video 要素が存在しない"},
+  {"criterion":"1.2.5","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"HTML 全体に audio/video 要素が存在しない"},
+  {"criterion":"1.3.1","status":"fail","details":"見出し階層がレベルを飛ばしている（h1 の次が h3、セクション内は h4）","evidence":"ツリーの見出しが出現順に `- heading \"つばめ台コミュニティセンターへようこそ\" [level=1]`→`- heading \"お知らせ\" [level=3]`→`- heading \"利用案内\" [level=3]`→`- heading \"部屋を予約する\" [level=4]` で level=2 が存在しない"},
+  {"criterion":"1.4.5","status":"warning","details":"ヒーロー画像の alt が「画像」で内容を説明しておらず、文字画像かどうか HTML からは判定できない。要目視確認（alt の内容不足自体は 1.1.1 の観点）","evidence":""},
+  {"criterion":"1.4.13","status":"warning","details":"ホバー/フォーカスで表示される追加コンテンツの有無は CSS の :hover 等でも実現され得るため、HTML のみでは判定不可。要目視確認","evidence":""},
+  {"criterion":"2.2.1","status":"not-applicable","details":"時間制限付きコンテンツなし","evidence":"head に meta refresh がなく、HTML 全体に script 要素が存在しない"},
+  {"criterion":"2.2.2","status":"warning","details":"CSS アニメーションの有無・一時停止手段は外部 CSS（style.css）に依存し、HTML のみでは判定不可。要目視確認","evidence":""},
+  {"criterion":"2.4.1","status":"fail","details":"ランドマーク（banner/navigation/main/contentinfo）が一切なく、スキップリンクも存在しない","evidence":"ツリーに banner/navigation/main/contentinfo で始まる行が存在しない。HTML はヘッダー・ナビ・本文・フッターがすべて div（div.site-header / div.site-nav / div.content / div.site-footer）で、最初のリンクはブランドリンクでありスキップリンク（a[href=\"#main\"] 等）がない"},
+  {"criterion":"2.4.4","status":"fail","details":"リンク先が分からない曖昧なリンクテキストが多数ある","evidence":"ツリー: `- link \"詳しくはこちら\"`、`- link \"こちら\"`（3件: facility.html#rooms / facility.html#hours / contact.html 宛）、`- link \"詳細はこちら\"`"},
+  {"criterion":"3.1.1","status":"fail","details":"html 要素に lang 属性がない","evidence":"HTML: `<html>`（lang 属性なし）"},
+  {"criterion":"3.1.2","status":"fail","details":"本文中の英語フレーズに lang 属性がない","evidence":"HTML: `<span class=\"en\">A place for everyone in Tsubamedai.</span>`（lang 属性なしの class のみ）"},
+  {"criterion":"4.1.2","status":"fail","details":"検索ボタンに accessible name がない（中身が aria-hidden の SVG のみでテキストも aria-label もない）","evidence":"ツリー: `- searchbox \"サイト内検索\"` の直後に名前なしの `- button`。HTML: `<button type=\"submit\"><svg aria-hidden=\"true\" ...></svg></button>`"}
+]}

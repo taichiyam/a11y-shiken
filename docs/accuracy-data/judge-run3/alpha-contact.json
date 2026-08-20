@@ -1,0 +1,18 @@
+{"overrides":[
+  {"criterion":"1.2.1","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"a11y-tree 全体および HTML に audio/video 要素が存在しない"},
+  {"criterion":"1.2.2","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"a11y-tree 全体および HTML に audio/video 要素が存在しない"},
+  {"criterion":"1.2.3","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"a11y-tree 全体および HTML に audio/video 要素が存在しない"},
+  {"criterion":"1.2.4","status":"not-applicable","details":"ライブの音声コンテンツなし","evidence":"a11y-tree 全体および HTML に audio/video 要素が存在しない"},
+  {"criterion":"1.2.5","status":"not-applicable","details":"映像コンテンツなし","evidence":"a11y-tree 全体および HTML に audio/video 要素が存在しない"},
+  {"criterion":"1.3.1","status":"pass","details":"見出し階層は h1 のみで問題なし。フォームコントロールはすべて accessible name を持つ","evidence":"ツリー: - heading \"お問い合わせ\" [level=1]（唯一の見出し）、- textbox \"お名前（必須）\"、- textbox \"メールアドレス（必須）\"、- textbox \"電話番号（任意）\"、- combobox \"お問い合わせの種類（必須）\"、- textbox \"お問い合わせ内容（必須）\"、- checkbox \"個人情報の取り扱いに同意する（必須）\"（名前なしのコントロールなし）"},
+  {"criterion":"1.3.2","status":"pass","details":"読み上げ順序が論理的（スキップリンク→ヘッダー→ナビ→メイン→フッター）","evidence":"ツリーの出現順: - link \"本文へスキップ\" → - banner → - navigation → - main（先頭に heading [level=1]）→ - contentinfo"},
+  {"criterion":"1.4.5","status":"not-applicable","details":"img 要素なし（文字画像なし）。装飾 SVG は aria-hidden かつ隣にテキスト「検索」あり","evidence":"HTML 全体に <img> タグが存在しない。唯一の図形は <svg aria-hidden=\"true\" focusable=\"false\"> で、ボタン内にテキスト「検索」あり"},
+  {"criterion":"1.4.13","status":"not-applicable","details":"ホバー/フォーカスで追加表示されるコンテンツなし","evidence":"HTML に title 属性・ツールチップ・ドロップダウン等のホバー表示要素が存在せず、script 要素もない"},
+  {"criterion":"2.2.1","status":"not-applicable","details":"時間制限付きコンテンツなし","evidence":"HTML に meta refresh・script 要素が存在しない"},
+  {"criterion":"2.2.2","status":"not-applicable","details":"動く・自動更新するコンテンツなし","evidence":"HTML に marquee・カルーセル/スライダー類のマークアップ・script 要素が存在しない"},
+  {"criterion":"2.4.1","status":"pass","details":"スキップリンクとランドマークが揃っている","evidence":"ツリー: - link \"本文へスキップ\"（/url: \"#main\"）、- banner、- navigation、- main、- contentinfo が存在。HTML: <a class=\"skip-link\" href=\"#main\">本文へスキップ</a> と <main id=\"main\">"},
+  {"criterion":"2.4.4","status":"pass","details":"すべてのリンクテキストが目的を説明している","evidence":"ツリー: - link \"本文へスキップ\"、- link \"つばめ台コミュニティセンター\"、- link \"トップ\"、- link \"施設案内\"、- link \"お問い合わせ\"（「こちら」等の曖昧なリンクなし）"},
+  {"criterion":"3.1.1","status":"pass","details":"ページの言語が指定されている","evidence":"HTML: <html lang=\"ja\">"},
+  {"criterion":"3.1.2","status":"not-applicable","details":"ページ内に日本語以外の言語のまとまった文章なし","evidence":"HTML 本文はすべて日本語（外国語のパッセージが存在しない）"},
+  {"criterion":"4.1.2","status":"pass","details":"すべての UI コンポーネントが role と accessible name を持ち、aria-hidden による誤った隠蔽なし","evidence":"ツリー: - searchbox \"サイト内検索\"、- button \"検索\"、各 textbox/combobox/checkbox に accessible name あり、- button \"送信する\"。aria-hidden はボタン内装飾 <svg aria-hidden=\"true\"> のみで、ボタン名「検索」はテキストで担保"}
+]}

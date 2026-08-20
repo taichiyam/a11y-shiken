@@ -1,0 +1,17 @@
+{"overrides":[
+  {"criterion":"1.2.1","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"HTML 全体に audio/video 要素が存在しない"},
+  {"criterion":"1.2.2","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"HTML 全体に audio/video 要素が存在しない"},
+  {"criterion":"1.2.3","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"HTML 全体に audio/video 要素が存在しない"},
+  {"criterion":"1.2.4","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"HTML 全体に audio/video 要素が存在しない"},
+  {"criterion":"1.2.5","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"HTML 全体に audio/video 要素が存在しない"},
+  {"criterion":"1.3.1","status":"pass","details":"すべてのフォームコントロールにラベル由来の accessible name があり、見出しは h1 のみでレベル飛ばしなし","evidence":"ツリー: `- textbox \"お名前（必須）\"`、`- textbox \"メールアドレス（必須）\"`、`- textbox \"電話番号（任意）\"`、`- combobox \"お問い合わせの種類（必須）\"`、`- textbox \"お問い合わせ内容（必須）\"`、`- checkbox \"個人情報の取り扱いに同意する（必須）\"`。見出しは `- heading \"お問い合わせ\" [level=1]` のみ"},
+  {"criterion":"1.4.5","status":"not-applicable","details":"画像なし","evidence":"HTML 全体に img 要素が存在しない"},
+  {"criterion":"1.4.13","status":"warning","details":"ホバー/フォーカスで表示される追加コンテンツの有無は CSS の :hover 等でも実現され得るため、HTML のみでは判定不可。要目視確認","evidence":""},
+  {"criterion":"2.2.1","status":"not-applicable","details":"時間制限付きコンテンツなし","evidence":"head に meta refresh がなく、HTML 全体に script 要素が存在しない"},
+  {"criterion":"2.2.2","status":"warning","details":"CSS アニメーションの有無・一時停止手段は外部 CSS（style.css）に依存し、HTML のみでは判定不可。要目視確認","evidence":""},
+  {"criterion":"2.4.1","status":"pass","details":"ランドマークが揃っており、スキップリンクも先頭にある","evidence":"ツリー: `- banner:`、`- navigation:`、`- main:`、`- contentinfo:` が存在。先頭に `- link \"本文へスキップ\":` `/url: \"#main\"`（HTML: `<a class=\"skip-link\" href=\"#main\">本文へスキップ</a>` と `<main id=\"main\">`）"},
+  {"criterion":"2.4.4","status":"pass","details":"リンクテキストはいずれもリンク先を説明している","evidence":"ツリー: `- link \"本文へスキップ\"`、`- link \"つばめ台コミュニティセンター\"`、`- link \"トップ\"`、`- link \"施設案内\"`、`- link \"お問い合わせ\"`。「こちら」のような曖昧なリンクなし"},
+  {"criterion":"3.1.1","status":"pass","details":"ページの言語が設定されている","evidence":"HTML: `<html lang=\"ja\">`"},
+  {"criterion":"3.1.2","status":"not-applicable","details":"ページ内に日本語以外の言語の文言がない","evidence":"HTML 本文のテキストはすべて日本語（外国語のフレーズが存在しない）"},
+  {"criterion":"4.1.2","status":"pass","details":"すべてのインタラクティブ要素に role と accessible name がある。同意チェックはネイティブ input[type=checkbox] + label。aria-hidden はテキスト併記の装飾 SVG のみ","evidence":"ツリー: `- searchbox \"サイト内検索\"`、`- button \"検索\"`、`- checkbox \"個人情報の取り扱いに同意する（必須）\"`、`- button \"送信する\"`。HTML の aria-hidden は `<svg aria-hidden=\"true\" ...>`（隣にテキスト「検索」あり）のみ"}
+]}

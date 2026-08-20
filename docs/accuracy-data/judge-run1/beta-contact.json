@@ -1,0 +1,18 @@
+{"overrides":[
+  {"criterion":"1.2.1","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"a11y-tree 全体および HTML に audio/video 要素が存在しない"},
+  {"criterion":"1.2.2","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"a11y-tree 全体および HTML に audio/video 要素が存在しない"},
+  {"criterion":"1.2.3","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"a11y-tree 全体および HTML に audio/video 要素が存在しない"},
+  {"criterion":"1.2.4","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"a11y-tree 全体および HTML に audio/video 要素が存在しない"},
+  {"criterion":"1.2.5","status":"not-applicable","details":"音声・映像コンテンツなし","evidence":"a11y-tree 全体および HTML に audio/video 要素が存在しない"},
+  {"criterion":"1.3.1","status":"fail","details":"電話番号入力欄に label が関連付けられておらず accessible name がない（span で見出し表示のみ）。また必須項目の情報がプログラム上の name・属性に含まれていない","evidence":"ツリーに名前なしの - textbox 行（text: 電話番号 の直後）。HTML では <span class=\"field-title\">電話番号</span> と <input type=\"tel\" id=\"tel\"> が label で関連付けられていない"},
+  {"criterion":"1.3.2","status":"pass","details":"DOM 順序（読み上げ順）は論理的で、内容の意味が順序に依存して損なわれる箇所はない","evidence":"ツリーがヘッダー（link \"つばめ台コミュニティセンター\"・searchbox）→ ナビゲーション list → h1 → 説明文 → フォーム項目 → 送信ボタン → フッターの順で出現"},
+  {"criterion":"1.4.5","status":"not-applicable","details":"画像なし（文字画像の使用なし）","evidence":"HTML に img 要素が存在しない（svg は装飾アイコンで aria-hidden=\"true\"）"},
+  {"criterion":"1.4.13","status":"not-applicable","details":"ホバー/フォーカスで追加表示されるコンテンツなし","evidence":"HTML に title 属性・ツールチップ要素・script 要素が存在しない"},
+  {"criterion":"2.2.1","status":"not-applicable","details":"時間制限付きコンテンツなし","evidence":"HTML に meta refresh・script 要素が存在しない"},
+  {"criterion":"2.2.2","status":"warning","details":"CSS ファイル（style.css）は検査対象外のため、CSS アニメーションの有無と一時停止手段を判定できない。要目視確認","evidence":""},
+  {"criterion":"2.4.1","status":"fail","details":"ランドマークが一切なく、スキップリンクも存在しない","evidence":"a11y-tree に banner / navigation / main / contentinfo で始まる行が存在しない（ヘッダー・ナビ・本文・フッターがすべて div でマークアップ）。HTML 内に #main 等へのスキップリンク a 要素も存在しない"},
+  {"criterion":"2.4.4","status":"pass","details":"リンクテキストはいずれもリンク先を説明している","evidence":"- link \"お問い合わせ\"、- link \"トップ\"、- link \"ご案内\"、- link \"つばめ台コミュニティセンター\"。「こちら」等の曖昧なリンク名なし"},
+  {"criterion":"3.1.1","status":"pass","details":"ページの言語が指定されている","evidence":"<html lang=\"ja\">"},
+  {"criterion":"3.1.2","status":"not-applicable","details":"ページの主要言語（日本語）以外のフレーズが存在しない","evidence":"HTML 本文はすべて日本語で、他言語のパッセージ・フレーズが存在しない"},
+  {"criterion":"4.1.2","status":"fail","details":"(1) 電話番号の textbox に accessible name がない。(2) 同意チェックボックスが div（class=\"fake-checkbox\"）で実装され、role・name・state を持たずツリーに checkbox として現れない。(3) 送信ボタンの aria-label=\"フォーム\" が可視テキスト「送信する」と異なる名前になっている","evidence":"ツリーに名前なしの - textbox 行（text: 電話番号 の直後）。ツリーに checkbox 行がなく text: 個人情報の取り扱いに同意する のみ（HTML: <div class=\"fake-checkbox\" id=\"agree\"></div>）。- button \"フォーム\": 送信する"}
+]}
