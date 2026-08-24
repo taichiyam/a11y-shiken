@@ -630,7 +630,7 @@ cp <skill_dir>/references/index-html-template.html {OUTPUT_DIR}/report/index.htm
 
 | `REPORT_FORMAT` | 最終報告で案内しないもの |
 |---|---|
-| `excel` | `markdown/{ラベル}.md`・`markdown/_index.md`（ステップ5.7 をスキップ）、`index.md`・`index.html`（ステップ5.9 をスキップ） |
+| `excel` | `markdown/{ラベル}.md`（ステップ5.7 をスキップ）、`markdown/_index.md`・`index.md`・`index.html`（ステップ5.9 をスキップ） |
 | `markdown` | `a11y-checklist-*.xlsx`（ファイル自体はステップ5.5 で常に生成される。`generate-checklist-xlsx.ts` は `--output` 必須のため。報告で案内しないだけ） |
 | `both` | なし |
 
