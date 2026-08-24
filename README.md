@@ -174,6 +174,8 @@ npx skills add taichiyam/a11y-shiken --global
 
 ## 使い方
 
+インストールから「1 ページ検査して結果を読む」までを一本道で辿るなら [10 分ハンズオン](docs/hands-on.md) を参照してください（検査対象は用意不要です）。
+
 ```
 /a11y-shiken https://example.com
 ```
