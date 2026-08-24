@@ -12,6 +12,7 @@
 docs/a11y-test/{yyyymmddhhmmss}_{ドメイン名}/
 ├── report/                              ← 確認用（クライアント・チームに渡すファイル）
 │   ├── index.md                        ← 目次 + 全ページ横断サマリー
+│   ├── index.html                      ← HTML ビューア（単一ファイル / そのまま開ける）
 │   ├── markdown/
 │   │   ├── TOP.md
 │   │   ├── CAR-LINEUP.md
@@ -108,43 +109,20 @@ docs/a11y-test/{yyyymmddhhmmss}_{ドメイン名}/
 
 ## 4. ブラウザでの閲覧
 
-### 推奨: Docsify
+`report/index.html` を生成する（ステップ5.9 ③、`scripts/generate-report-html.ts`）。
 
-`report/markdown/` ディレクトリに `index.html` を1枚追加するだけで、ローカルサーバーでmarkdownをサイトとして閲覧できる。
+Markdown 本文と marked.js / DOMPurify の本体をすべて埋め込んだ単一ファイルなので、
+**ローカルサーバーを起動せずブラウザで直接開ける**（`open {OUTPUT_DIR}/report/index.html`）。
+オフラインでも表示でき、ファイル 1 つを渡すだけで共有できる。
 
-```html
-<!-- report/markdown/index.html -->
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>アクセシビリティテスト レポート</title>
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify/themes/vue.css">
-</head>
-<body>
-  <div id="app"></div>
-  <script>
-    window.$docsify = { name: 'A11y Report', loadSidebar: true }
-  </script>
-  <script src="//cdn.jsdelivr.net/npm/docsify/lib/docsify.min.js"></script>
-</body>
-</html>
-```
+左サイドバーに全ページが並び、クリックで右ペインに切り替わる。
+レポート本文中の相対 `.md` リンクも、同じページ切替として動作する。
 
-起動:
-```bash
-npx serve report/markdown
-# または
-python3 -m http.server 3000 -d report/markdown
-```
+Docsify や MkDocs のような外部ビューアは使わない。閲覧のために追加のツール・
+サーバー・ネットワーク接続を要求しないことを優先している。
 
-### 用途別推奨ツール
-
-| 用途 | ツール |
-|------|-------|
-| 自分で確認 | VS Code（Cmd+Shift+V）または Obsidian |
-| チーム内共有 | Docsify（ローカル）または GitHub |
-| クライアント共有 | MkDocs + GitHub Pages |
+Markdown を直接読みたい場合は `report/markdown/*.md` が独立したファイルとして残っているため、
+VS Code（Cmd+Shift+V）や Obsidian でそのまま開ける。
 
 ---
 
@@ -154,6 +132,7 @@ python3 -m http.server 3000 -d report/markdown
 
 ```
 report/index.md
+report/index.html                          ← HTML ビューア（単一ファイル）
 report/markdown/{ページラベル}.md          ← ページ名をそのまま使用
 report/a11y-checklist-{ドメイン}-{日付}.xlsx
 ```

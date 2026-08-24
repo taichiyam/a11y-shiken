@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>アクセシビリティテスト レポート</title>
-  <script src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js" integrity="sha384-H+hy9ULve6xfxRkWIh/YOtvDdpXgV2fmAGQkIDTxIgZwNoaoBal14Di2YTMR6MzR" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.5/dist/purify.min.js" integrity="sha384-qSFej5dZNviyoPgYJ5+Xk4bEbX8AYddxAHPuzs1aSgRiXxJ3qmyWNaPsRkpv/+x5" crossorigin="anonymous"></script>
+  <!-- marked.js と DOMPurify の本体が generate-report-html.ts によってここに埋め込まれる。
+       CDN から読まないのは、file:// で開いたときやオフライン環境でも描画できるようにするため。 -->
+  <!-- __LIBS_PLACEHOLDER__ -->
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -134,11 +135,11 @@
 
 <script>
   // --- Configuration ---
-  // This array is populated by the skill when generating index.html.
-  // Each entry: { label: "display name", file: "relative path to .md" }
-  const pages = [
-    // __PAGES_PLACEHOLDER__
-  ];
+  // generate-report-html.ts injects two declarations here:
+  //   const pages = [{ label: "display name", file: "relative path to .md" }, ...]
+  //   const pageContents = { "relative path to .md": "markdown source", ... }
+  // The Markdown is embedded rather than fetched so the page works from file://.
+  // __DATA_PLACEHOLDER__
 
   const nav = document.getElementById('nav');
   const content = document.getElementById('content');
@@ -192,7 +193,7 @@
     }
   });
 
-  async function loadPage(index) {
+  function loadPage(index) {
     // Update active state
     nav.querySelectorAll('a').forEach(a => a.classList.remove('active'));
     nav.querySelector(`a[data-index="${index}"]`).classList.add('active');
@@ -200,9 +201,8 @@
     const page = pages[index];
     currentDir = page.file.replace(/[^/]*$/, '');
     try {
-      const res = await fetch(page.file);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const md = await res.text();
+      const md = pageContents[page.file];
+      if (md === undefined) throw new Error('埋め込まれた本文が見つかりません');
       // Render markdown and sanitize to prevent XSS
       const rawHtml = marked.parse(md);
       content.textContent = '';
@@ -214,7 +214,7 @@
       content.textContent = '';
       const errP = document.createElement('p');
       errP.style.color = '#cf222e';
-      errP.textContent = 'ファイルの読み込みに失敗しました: ' + page.file + ' — ' + e.message;
+      errP.textContent = '本文の描画に失敗しました: ' + page.file + ' — ' + e.message;
       content.appendChild(errP);
     }
   }

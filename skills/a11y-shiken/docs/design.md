@@ -49,14 +49,16 @@ skills/a11y-shiken/
 │   ├── a11y-tree.ts                      # アクセシビリティツリー取得
 │   ├── generate-checklist-xlsx.ts        # 結果統合 + merged-result.json / Excel 生成
 │   ├── generate-baseline-view.ts         # デジタル庁 基本17項目ビュー生成
+│   ├── generate-report-html.ts           # HTML ビューア生成（Markdown・ライブラリを埋め込み単一ファイル化）
 │   ├── generate-checklist-xlsx.test.ts   # 統合ロジックのテスト
-│   └── generate-baseline-view.test.ts    # 17項目集約のテスト
+│   ├── generate-baseline-view.test.ts    # 17項目集約のテスト
+│   └── generate-report-html.test.ts      # HTML 埋め込み・エスケープのテスト
 ├── references/
 │   ├── wcag-checklist.md                 # WCAG 2.2 A+AA 全達成基準リスト
 │   ├── digital-agency-baseline.md        # 基本17項目の対応表と出典
 │   ├── report-output-design.md           # Markdown レポートのフォーマット
 │   ├── google-sheets.md                  # Google Sheets 連携手順
-│   └── index-html-template.html          # HTML ビューアのテンプレート
+│   └── index-html-template.html          # HTML ビューアのテンプレート（generate-report-html.ts が埋める）
 └── docs/
     ├── design.md                         # 本ドキュメント
     ├── integration-design.md             # 統合方式の設計判断の記録
