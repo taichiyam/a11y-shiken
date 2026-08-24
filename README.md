@@ -262,6 +262,12 @@ v0.1.0 は「動く最小構成」です。以下は未実装で、検討中の�
 
 ---
 
+## Issue・Pull Request について
+
+**このリポジトリでは Issue・Pull Request を受け付けていません。** 開発は個人の管理下で進めており、外部からの Issue 起票・PR は現時点で対応できません。
+
+フィードバックは歓迎します。[GitHub 上のこの人のプロフィール](https://github.com/taichiyam) からご連絡ください。
+
 ## ライセンスと帰属
 
 このリポジトリは [MIT License](LICENSE) です。
