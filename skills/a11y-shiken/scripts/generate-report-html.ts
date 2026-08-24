@@ -66,10 +66,11 @@ export function assertEmbeddableScript(source: string, name: string): void {
   // `<!--` は単体なら script data escaped state に入るだけで閉じタグは効く。
   // 危険なのは、そのあとに `<script` が続いて double escaped state へ進む場合で、
   // そこから先は本来の `</script>` すら閉じタグとして扱われなくなる。
-  // 厳密な状態機械までは追わず、両方を含むライブラリは埋め込み対象から外す。
-  if (/<!--/.test(source) && /<script/i.test(source)) {
+  // 厳密な状態機械までは追わないが、順序は見る（`<script` が先にあるだけなら安全）。
+  const commentAt = source.indexOf("<!--");
+  if (commentAt !== -1 && /<script/i.test(source.slice(commentAt))) {
     throw new Error(
-      `${name} に <!-- と <script が両方含まれるため埋め込めません（script tokenizer が壊れる可能性があります）`
+      `${name} の <!-- より後ろに <script があるため埋め込めません（script tokenizer が壊れる可能性があります）`
     );
   }
 }
@@ -84,7 +85,9 @@ export function assertEmbeddableScript(source: string, name: string): void {
 export function stripSourceMappingUrl(source: string): string {
   return source
     .replace(/^[ \t]*\/\/[#@][ \t]*sourceMappingURL=.*$/gm, "")
-    .replace(/\/\*[#@][ \t]*sourceMappingURL=[\s\S]*?\*\//g, "");
+    // ブロック形式も「その行がディレクティブだけ」の場合に限る。行内の位置を縛らないと
+    // const text = "/*# sourceMappingURL=x */" のような文字列リテラルの中身まで消してしまう
+    .replace(/^[ \t]*\/\*[#@][ \t]*sourceMappingURL=[^\n]*?\*\/[ \t]*$/gm, "");
 }
 
 export interface BuildOptions {

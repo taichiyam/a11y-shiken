@@ -74,7 +74,12 @@ describe("assertEmbeddableScript", () => {
     expect(() => assertEmbeddableScript('var re = /<!--/;', "lib")).not.toThrow();
   });
 
-  test("[異常] <!-- と <script を両方含むライブラリが拒否されること", () => {
+  test("[正常] <script が <!-- より前にあるだけのライブラリは通ること", () => {
+    // double escaped state に入るのは <!-- のあとに <script が続く場合だけ
+    expect(() => assertEmbeddableScript('var a = "<script"; var b = "<!--";', "lib")).not.toThrow();
+  });
+
+  test("[異常] <!-- のあとに <script が続くライブラリが拒否されること", () => {
     expect(() => assertEmbeddableScript('var a = "<!--"; var b = "<script";', "lib")).toThrow(/lib/);
   });
 });
@@ -94,6 +99,12 @@ describe("stripSourceMappingUrl", () => {
   test("[正常] ブロックコメント形式も取り除かれること", () => {
     const stripped = stripSourceMappingUrl("var a = 1;\n/*# sourceMappingURL=lib.js.map */\n");
     expect(stripped).not.toContain("sourceMappingURL");
+  });
+
+  test("[正常] 文字列リテラル中のブロックコメント形式が保持されること", () => {
+    // 行内の位置を縛らないと、値の中身まで消してライブラリの挙動を静かに壊す
+    const code = 'var text = "/*# sourceMappingURL=x */";';
+    expect(stripSourceMappingUrl(code)).toBe(code);
   });
 
   test("[正常] 直前の空行が巻き込まれないこと", () => {

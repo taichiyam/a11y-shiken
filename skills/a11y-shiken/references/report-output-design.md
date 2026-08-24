@@ -12,6 +12,7 @@
 docs/a11y-test/{yyyymmddhhmmss}_{ドメイン名}/
 ├── report/                              ← 確認用（クライアント・チームに渡すファイル）
 │   ├── index.md                        ← 目次 + 全ページ横断サマリー
+│   ├── index.html                      ← HTML ビューア（単一ファイル / そのまま開ける）
 │   ├── markdown/
 │   │   ├── TOP.md
 │   │   ├── CAR-LINEUP.md
@@ -131,6 +132,7 @@ VS Code（Cmd+Shift+V）や Obsidian でそのまま開ける。
 
 ```
 report/index.md
+report/index.html                          ← HTML ビューア（単一ファイル）
 report/markdown/{ページラベル}.md          ← ページ名をそのまま使用
 report/a11y-checklist-{ドメイン}-{日付}.xlsx
 ```
