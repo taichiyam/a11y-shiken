@@ -196,7 +196,7 @@ TOP,https://example.com/
 ```
 docs/a11y-test/{日時}_{ドメイン}/
 ├── report/
-│   ├── a11y-checklist-{ドメイン}-{日付}.xlsx   ← 55 行のチェックシート
+│   ├── a11y-checklist-{ドメイン}-{日付}.xlsx   ← まとめ + 基本17項目 + 55 行のチェックシート
 │   ├── index.html                              ← サイドバー付き HTML ビューア
 │   └── markdown/
 │       ├── {ページ}.md                          ← HTML スニペット・推奨対応つき

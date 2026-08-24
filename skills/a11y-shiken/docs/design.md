@@ -166,6 +166,8 @@ URL入力
    - オートフィルター対応
    - 列: No. / カテゴリ / チェック項目 / 達成基準 / レベル / 確認内容 / 担当 / 結果 / 備考
 
+6. **シート構成**: 「まとめ」→「基本17項目」→ 各ページの詳細シート。「基本17項目」は URL がいくつあっても 1 枚で、行は 17 項目固定・ページごとに列が増える（`populateBaselineSheet()`）。集約は `generate-baseline-view.ts` の `aggregate()` を import して使う。ロジックを複製しないことで、Excel と Markdown（`{ラベル}-baseline-17.md`）の結果が食い違う余地をなくしている
+
 ### 3.3 a11y-visual-test.ts（Visual 検査）
 
 **入力**: `<URL>`（必須）
