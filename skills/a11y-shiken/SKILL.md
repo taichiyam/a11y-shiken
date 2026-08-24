@@ -597,32 +597,21 @@ cd <skill_dir> && bun scripts/generate-baseline-view.ts \
 
 #### ③ report/index.html（HTML ビューア）
 
-`references/index-html-template.html` をコピーし、`// __PAGES_PLACEHOLDER__` の行を実際のページ配列で置換する。marked.js + DOMPurify を CDN から読み込み、左サイドバーで各ページに遷移できる構成。
+`generate-report-html.ts` で生成する。**テンプレートを手作業でコピー・置換してはならない**（プレースホルダーの置換位置を誤ると HTML の構文が壊れ、画面が真っ白になる）。
 
-**置換例:**
-```javascript
-const pages = [
-  { label: "概要・サマリー", file: "./markdown/_index.md" },
-  { label: "TOP", file: "./markdown/TOP.md" },
-  { label: "会社概要", file: "./markdown/会社概要.md" },
-  { label: "お知らせ詳細", file: "./markdown/お知らせ詳細.md" }
-];
-```
-
-置換は `sed` やテキスト置換で行う:
 ```bash
-# テンプレートをコピー
-cp <skill_dir>/references/index-html-template.html {OUTPUT_DIR}/report/index.html
-
-# __PAGES_PLACEHOLDER__ を実際のページ配列で置換
-# （Claude が生成時にページ配列を構築して埋め込む）
+cd <skill_dir> && bun scripts/generate-report-html.ts \
+  --report-dir {OUTPUT_DIR}/report \
+  --page "概要・サマリー=./markdown/_index.md" \
+  --page "TOP=./markdown/TOP.md" \
+  --page "会社概要=./markdown/会社概要.md"
 ```
 
-**セキュリティ注意**: ラベル文字列に `"`, `'`, `</script>` 等が含まれるとスクリプト注入のリスクがあるため、ラベルは `JSON.stringify()` 相当のエスケープを施してから埋め込むこと。
+`--page` は「ラベル=report ディレクトリからの相対パス」の形式で、ページ数ぶん繰り返す。ページ数が多い場合は `--pages-json '[{"label":"TOP","file":"./markdown/TOP.md"}]'` でまとめて渡せる。ステップ5.5b で生成した `{ラベル}-baseline-17.md` も 1 ページとして含める。
 
-**閲覧方法**: ブラウザで `index.html` を開くと、左サイドバーに全ページが表示され、クリックで各 Markdown レポートが右ペインにレンダリングされる。Markdown プレビュー（VSCode等）と同じ内容が表示される。
+スクリプトは Markdown 本文と marked.js / DOMPurify の本体をすべて HTML に埋め込むため、**生成された index.html はローカルサーバーなしで開ける単一ファイル**になる。ラベルや本文は `JSON.stringify` 相当のエスケープを通したうえで埋め込まれるため、`</script>` を含むコードスニペットがレポートにあっても壊れない。
 
-> **注意**: `file://` プロトコルでは `fetch` がブロックされるため、ローカルサーバー経由で開く必要がある。完了通知時に `npx serve {OUTPUT_DIR}/report` 等のコマンドを案内する。
+**閲覧方法**: `index.html` をブラウザで開く（ダブルクリック、または `open {OUTPUT_DIR}/report/index.html`）。左サイドバーに全ページが表示され、クリックで各 Markdown レポートが右ペインにレンダリングされる。本文中の相対 `.md` リンクもページ切替として動作する。オフラインでも表示できる。
 
 ### ステップ6: 完了通知
 
@@ -670,6 +659,12 @@ cp <skill_dir>/references/index-html-template.html {OUTPUT_DIR}/report/index.htm
 - 各URLの違反件数サマリー
 - 特に対応が必要な critical/serious の違反があれば強調
 - Claude検証で新たに検出された問題の件数
+
+あわせて、生成した成果物を **SendUserFile で送る**（パスをテキストで書くだけではクリックで開けないため）:
+- `report/index.html`（`REPORT_FORMAT` が `markdown` / `both` の場合）— 単一ファイルなのでクリックだけで開ける
+- `report/a11y-checklist-*.xlsx`（`REPORT_FORMAT` が `excel` / `both` の場合）は `display: "attach"` で送る
+
+`index.html` はローカルサーバーなしで開けるため、`npx serve` 等のコマンドを案内する必要はない。ターミナルから開きたい場合の `open {OUTPUT_DIR}/report/index.html` だけ添えれば足りる。
 
 ## 将来の改善オプション
 

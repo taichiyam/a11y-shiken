@@ -59,7 +59,7 @@ ng 版の3ページすべてで共通して検出された問題:
 
 | | |
 |---|---|
-| `report/index.html` | **HTML ビューア**（サイドバー付き。下記のとおりローカルサーバー経由で開く） |
+| `report/index.html` | **HTML ビューア**（サイドバー付き。単一ファイルなのでブラウザで直接開ける） |
 | `report/index.md` | 目次 |
 | `report/markdown/_index.md` | 概要 + ページ別サマリー |
 | `report/markdown/{ページ}.md` | 55項目の統合レポート（修正箇所の詳細・推奨対応つき） |
@@ -73,10 +73,11 @@ ng 版の3ページすべてで共通して検出された問題:
 生の axe / Visual / Interactive の JSON、アクセシビリティツリー、スクリーンショットは
 サイズが大きいため同梱していない（下記の手順で再実行すれば生成される）。
 
-`report/index.html` は `file://` では動かない（`fetch` がブロックされるため）。
+`report/index.html` は Markdown 本文と描画用ライブラリを埋め込んだ単一ファイルなので、
+ブラウザで直接開ける（サーバー起動もネットワーク接続も不要）。
 
 ```bash
-bunx serve examples/site-report/report
+open examples/site-report/report/index.html
 ```
 
 ## 再現手順

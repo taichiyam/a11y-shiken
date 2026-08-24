@@ -197,7 +197,7 @@ TOP,https://example.com/
 docs/a11y-test/{日時}_{ドメイン}/
 ├── report/
 │   ├── a11y-checklist-{ドメイン}-{日付}.xlsx   ← 55 行のチェックシート
-│   ├── index.html                              ← サイドバー付き HTML ビューア
+│   ├── index.html                              ← サイドバー付き HTML ビューア（単一ファイル / そのまま開ける）
 │   └── markdown/
 │       ├── {ページ}.md                          ← HTML スニペット・推奨対応つき
 │       └── {ページ}-baseline-17.md              ← 基本17項目ビュー
