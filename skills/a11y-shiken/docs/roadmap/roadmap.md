@@ -319,7 +319,7 @@ Interactive > Visual > Lighthouse > html-validate > Pa11y > Claude判定 > axe-c
 現在 WCAG 2.2 Level AA 固定。プロジェクトによって必要な基準が異なるため、プリセット選択に対応したい。
 
 ```bash
-/accessibility-test https://example.com --preset wcag21-aa
+/a11y-shiken https://example.com --preset wcag21-aa
 ```
 
 | プリセット名 | axe-coreタグ | 用途 |

@@ -20,19 +20,19 @@ URLを渡すだけで、WCAG 2.2 Level AA 全55項目のアクセシビリティ
 
 ## 使い方
 
-Claude Code で `/accessibility-test` に続けてURLを渡します。実行すると、レポート形式（Excel / Markdown / 両方）を選択でき、テスト完了後に `docs/a11y-test/` 配下にレポートが出力されます。
+Claude Code で `/a11y-shiken` に続けてURLを渡します。実行すると、レポート形式（Excel / Markdown / 両方）を選択でき、テスト完了後に `docs/a11y-test/` 配下にレポートが出力されます。
 
 **URLを直接指定:**
 
 ```
-/accessibility-test https://example.com
-/accessibility-test https://example.com https://example.com/contact
+/a11y-shiken https://example.com
+/a11y-shiken https://example.com https://example.com/contact
 ```
 
 **CSVファイルで指定（ページラベル付き）:**
 
 ```
-/accessibility-test urls.csv
+/a11y-shiken urls.csv
 ```
 
 CSVは「ラベル,URL」の形式です（ヘッダー行なし）。ラベルを省略してURLだけの行もOKです。
@@ -47,7 +47,7 @@ TOP,https://example.com
 <summary>JSONファイルでも指定できます</summary>
 
 ```
-/accessibility-test urls.json
+/a11y-shiken urls.json
 ```
 
 ```json
@@ -64,7 +64,7 @@ URLの配列（`["https://example.com", ...]`）でも指定できます。
 **特定要素をテスト対象から除外したい場合:**
 
 ```
-/accessibility-test https://example.com --exclude ".ad-banner,.third-party-widget"
+/a11y-shiken https://example.com --exclude ".ad-banner,.third-party-widget"
 ```
 
 ## 出力ファイル
@@ -138,7 +138,7 @@ docs/a11y-test/{yyyymmddhhmmss}_{ドメイン名}/
 スキル実行時に依存関係は自動チェック・インストールされるため、手動セットアップは通常不要。
 
 ```bash
-cd skills/accessibility-test/scripts
+cd skills/a11y-shiken/scripts
 bun install
 bunx playwright install chromium
 ```
@@ -153,7 +153,7 @@ bunx playwright install chromium
 ### ファイル構成
 
 ```
-accessibility-test/
+a11y-shiken/
 ├── SKILL.md                          # スキル定義
 ├── README.md                         # 本ファイル
 ├── scripts/                          # スキル用 - 実行可能コード

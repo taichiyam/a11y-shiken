@@ -125,13 +125,13 @@ $ARGUMENTS を解析する。`--setup` のみの場合はステップ0完了後�
 
 **方法1: スペース区切り（既存互換）**
 ```
-/accessibility-test https://example.com https://example.com/contact
+/a11y-shiken https://example.com https://example.com/contact
 ```
 ラベルなし。URLのドメイン/パスからラベルを自動導出する。
 
 **方法2: CSVファイル指定**
 ```
-/accessibility-test urls.csv
+/a11y-shiken urls.csv
 ```
 CSVフォーマット（ヘッダーなし）:
 - 1列（URLのみ）: `https://example.com` → ラベル自動導出
@@ -141,7 +141,7 @@ CSVフォーマット（ヘッダーなし）:
 
 **方法3: JSONファイル指定**
 ```
-/accessibility-test urls.json
+/a11y-shiken urls.json
 ```
 JSONフォーマット:
 - 文字列配列: `["https://example.com", "https://example.com/contact"]` → ラベル自動導出
