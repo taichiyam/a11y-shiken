@@ -1,7 +1,11 @@
 import { describe, expect, test } from "bun:test"
 import ExcelJS from "exceljs"
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import {
   buildMergedResult,
+  generateMultiUrlExcel,
   mergeResults,
   populateBaselineSheet,
   sanitizeClaudeOverrides,
@@ -632,5 +636,80 @@ describe("populateBaselineSheet（基本17項目シート）", () => {
   test("[正常] 見出し3列とヘッダー行がウィンドウ枠で固定されること", () => {
     const { sheet } = render([{ label: "TOP", merged: mergedWith({}) }])
     expect(sheet.views[0]).toMatchObject({ state: "frozen", xSplit: 3 })
+  })
+})
+
+describe("generateMultiUrlExcel（manifest → xlsx の結合）", () => {
+  /** 一時ディレクトリに manifest と入力 JSON を書き出し、Excel を生成して読み戻す。 */
+  async function buildWorkbook(labels: string[]) {
+    const dir = mkdtempSync(join(tmpdir(), "a11y-xlsx-"))
+    const entries = labels.map((label, i) => {
+      const sub = join(dir, `entry${i}`)
+      mkdirSync(sub, { recursive: true })
+      writeFileSync(join(sub, "axe-result.json"), JSON.stringify(axeFixture()))
+      return {
+        label,
+        url: `https://example.com/${i}`,
+        axeJson: join(sub, "axe-result.json"),
+      }
+    })
+
+    const outputPath = join(dir, "out.xlsx")
+    await generateMultiUrlExcel({ testDate: "2026-08-25T00:00:00+09:00", entries }, outputPath)
+
+    const wb = new ExcelJS.Workbook()
+    await wb.xlsx.readFile(outputPath)
+    return { wb, dir, outputPath }
+  }
+
+  test("[正常] シートが まとめ → 基本17項目 → 各ページ の順に並ぶこと", async () => {
+    const { wb } = await buildWorkbook(["TOP", "施設案内"])
+    expect(wb.worksheets.map((w) => w.name)).toEqual(["まとめ", "基本17項目", "TOP", "施設案内"])
+  })
+
+  test("[正常] まとめシートの詳細シートへのハイパーリンクが実在するシートを指すこと", async () => {
+    const { wb } = await buildWorkbook(["TOP", "施設案内"])
+    const names = new Set(wb.worksheets.map((w) => w.name))
+
+    const links: string[] = []
+    wb.getWorksheet("まとめ")!.eachRow((row) => {
+      row.eachCell((cell) => {
+        const v = cell.value as { hyperlink?: string } | null
+        if (v && typeof v === "object" && typeof v.hyperlink === "string") links.push(v.hyperlink)
+      })
+    })
+
+    expect(links.length).toBe(2)
+    for (const link of links) {
+      const sheetName = link.replace(/^#'/, "").replace(/'!A1$/, "")
+      expect(names.has(sheetName)).toBe(true)
+    }
+  })
+
+  test("[正常] ページラベルが「基本17項目」でもシート名が衝突しないこと", async () => {
+    const { wb } = await buildWorkbook(["基本17項目", "TOP"])
+    const names = wb.worksheets.map((w) => w.name)
+    expect(new Set(names).size).toBe(names.length)
+    // 集約シートが先に「基本17項目」を確保し、ページ側は別名になる
+    expect(names[1]).toBe("基本17項目")
+    expect(names[2]).not.toBe("基本17項目")
+  })
+
+  test("[正常] 基本17項目シートに17行が出力されること", async () => {
+    const { wb } = await buildWorkbook(["TOP"])
+    const sheet = wb.getWorksheet("基本17項目")!
+
+    const rows: string[][] = []
+    sheet.eachRow((row) => rows.push((row.values as unknown[]).slice(1).map((v) => String(v ?? ""))))
+    const headerIndex = rows.findIndex((r) => r[0] === "No.")
+
+    expect(rows.slice(headerIndex + 1)).toHaveLength(17)
+  })
+
+  test("[異常] entries が空の manifest でエラーが送出されること", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "a11y-xlsx-"))
+    await expect(
+      generateMultiUrlExcel({ testDate: "2026-08-25T00:00:00+09:00", entries: [] }, join(dir, "out.xlsx"))
+    ).rejects.toThrow(/1 件以上/)
   })
 })

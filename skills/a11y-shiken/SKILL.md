@@ -419,6 +419,8 @@ URL がいくつあっても **1 枚だけ**生成し、行は 17 項目で固�
 
 集約は `generate-baseline-view.ts` の `aggregate()` をそのまま使うため、ステップ5.5b で生成する `{ラベル}-baseline-17.md` と必ず同じ結果になる。**一部しか確認できていない項目を「確認OK」に丸めない**ルール（ステップ5.5b 参照）もそのまま適用される。
 
+レガシーの単一URLモード（`--json`）でも同じシートを生成する（シート構成は「基本17項目」→「チェックシート」の 2 枚）。
+
 **merged-result.json の出力:**
 スクリプトは Excel と同時に、各エントリごとに `{OUTPUT_DIR}/data/{ラベル}/merged-result.json` を自動生成する。このファイルは全テスト結果（axe-core・Visual・Interactive・Claude判定）を統合した55項目の最終判定結果を含み、ステップ5.7のMarkdownレポート生成で Single Source of Truth として使用される。
 

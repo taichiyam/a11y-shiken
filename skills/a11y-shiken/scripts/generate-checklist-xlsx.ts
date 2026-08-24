@@ -169,7 +169,7 @@ export function sanitizeClaudeOverrides(raw: ClaudeOverridesResult): {
 
 // --- マニフェスト JSON 型定義 ---
 
-interface ManifestEntry {
+export interface ManifestEntry {
   label: string;
   url: string;
   axeJson: string;
@@ -178,7 +178,7 @@ interface ManifestEntry {
   overridesJson?: string;
 }
 
-interface Manifest {
+export interface Manifest {
   testDate: string;
   entries: ManifestEntry[];
 }
@@ -1478,6 +1478,9 @@ export function populateBaselineSheet(
   entries: BaselineSheetEntry[],
   dateStr: string
 ): void {
+  if (entries.length === 0) {
+    throw new Error("基本17項目シートの生成には 1 件以上のエントリが必要です");
+  }
   const isSingle = entries.length === 1;
 
   // 各ページ × 17項目の集約結果を先に作る
@@ -1588,7 +1591,7 @@ export function populateBaselineSheet(
 
 // --- マルチURL Excel 生成 ---
 
-async function generateMultiUrlExcel(manifest: Manifest, outputPath: string): Promise<void> {
+export async function generateMultiUrlExcel(manifest: Manifest, outputPath: string): Promise<void> {
   const workbook = new ExcelJS.Workbook();
   const dateStr = formatDateStr(manifest.testDate);
   const sheetNames = new Set<string>();
@@ -1662,15 +1665,21 @@ async function generateSingleUrlExcel(
   const workbook = new ExcelJS.Workbook();
   const dateStr = formatDateStr(axeData.timestamp);
 
+  // マニフェスト経路と同じく、基本17項目シートを詳細シートより前に置く
+  const baselineSheet = workbook.addWorksheet("基本17項目");
   const summary = generateDetailSheet(
     workbook, "チェックシート", axeData.url, dateStr,
     axeData, visualData, interactiveData, claudeOverrides
   );
 
+  const merged = buildMergedResult(axeData.url, dateStr, axeData, visualData, interactiveData, claudeOverrides);
+  populateBaselineSheet(baselineSheet, [{ label: "結果", merged }], dateStr);
+
   await workbook.xlsx.writeFile(outputPath);
 
   console.log(`Excel チェックシートを生成しました: ${outputPath}`);
   console.log(`  - ${WCAG_CRITERIA.length} 項目`);
+  console.log(`  - シート: 基本17項目 + チェックシート`);
   console.log(`  - 確認OK: ${summary.passCount} / 修正あり: ${summary.failCount} / 未確認: ${summary.unknownCount}`);
 }
 
@@ -1697,6 +1706,10 @@ function main(): void {
   if (args.manifestPath) {
     // マルチURL モード
     const manifest = loadJson<Manifest>(args.manifestPath);
+    if (!Array.isArray(manifest.entries) || manifest.entries.length === 0) {
+      console.error("Error: manifest の entries が空です。1 件以上のエントリを指定してください。");
+      process.exit(1);
+    }
     // manifest.json 内の相対パスを manifest.json の場所基準で解決する
     const manifestDir = dirname(resolve(args.manifestPath));
     for (const entry of manifest.entries) {
