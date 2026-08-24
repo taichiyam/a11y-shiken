@@ -1,0 +1,45 @@
+name: Close unauthorized issues
+
+# このリポジトリは Issue を受け付けていない（README「Issue・Pull Request について」参照）。
+# オーナー以外が新規に開いた Issue を、コメント → クローズ → ロックの順で自動処理する。
+# 既存の Issue やオーナー自身が開く Issue には一切影響しない。
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  close-if-not-owner:
+    if: github.event.issue.user.login != github.repository_owner
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment, close, and lock
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number,
+              body: "このリポジトリでは Issue の受け付けを行っていません。開発は個人の管理下で進めています。フィードバックは README の「Issue・Pull Request について」に記載の連絡先からお願いします。この Issue は自動的にクローズ・ロックされます。",
+            });
+
+            await github.rest.issues.update({
+              owner,
+              repo,
+              issue_number,
+              state: "closed",
+            });
+
+            await github.rest.issues.lock({
+              owner,
+              repo,
+              issue_number,
+              lock_reason: "off-topic",
+            });

@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: このリポジトリは Issue を受け付けていません
+    url: https://github.com/taichiyam/a11y-shiken#issuepull-request-について
+    about: 開発は個人の管理下で進めています。フィードバックは README に記載の連絡先からお願いします。
