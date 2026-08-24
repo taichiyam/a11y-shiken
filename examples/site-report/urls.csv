@@ -1,0 +1,6 @@
+ok-TOP,http://127.0.0.1:8765/ok/index.html
+ok-施設案内,http://127.0.0.1:8765/ok/facility.html
+ok-お問い合わせ,http://127.0.0.1:8765/ok/contact.html
+ng-TOP,http://127.0.0.1:8765/ng/index.html
+ng-施設案内,http://127.0.0.1:8765/ng/facility.html
+ng-お問い合わせ,http://127.0.0.1:8765/ng/contact.html

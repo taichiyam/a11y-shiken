@@ -174,6 +174,8 @@ npx skills add taichiyam/a11y-shiken --global
 
 ## 使い方
 
+インストールから「1 ページ検査して結果を読む」までを一本道で辿るなら [10 分ハンズオン](docs/hands-on.md) を参照してください（検査対象は用意不要です）。
+
 ```
 /a11y-shiken https://example.com
 ```
@@ -202,8 +204,9 @@ docs/a11y-test/{日時}_{ドメイン}/
 └── data/                                        ← 生 JSON・スクリーンショット（証跡）
 ```
 
-実際の出力は [examples/komaru/](examples/komaru/) を参照してください。
-同じサイトの壊れた版と直った版を検査した実測結果と、生成された Excel チェックシートが置いてあります。
+実際の出力は [examples/site-report/](examples/site-report/) を参照してください。
+同梱の検証用ダミーサイト [examples/site/](examples/site/) の「壊れた版（ng）」と「直った版（ok）」各3ページを
+検査した実測結果と、生成された Excel チェックシートが置いてあります。
 
 ---
 
