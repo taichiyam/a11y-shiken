@@ -1,16 +1,21 @@
 import { describe, expect, test } from "bun:test"
+import ExcelJS from "exceljs"
 import {
   buildMergedResult,
   mergeResults,
+  populateBaselineSheet,
   sanitizeClaudeOverrides,
   type AxeResult,
   type AxeRule,
   type ClaudeOverride,
   type ClaudeOverridesResult,
   type InteractiveTestOutput,
+  type MergedResult,
+  type MergedResultItem,
   type VisualTestOutput,
   type WcagCriterion,
 } from "./generate-checklist-xlsx"
+import { BASELINE_ITEMS } from "./generate-baseline-view"
 
 // axe-core が達成基準を十分カバーしている基準（pass → 適合）
 const CRITERION: WcagCriterion = {
@@ -522,5 +527,110 @@ describe("buildMergedResult（矛盾フラグの出力反映）", () => {
     for (const item of merged.items) {
       expect(item.conflict).toBe(false)
     }
+  })
+})
+
+describe("populateBaselineSheet（基本17項目シート）", () => {
+  /** 指定した達成基準だけ状態を差し替えた merged-result を作る。未指定の基準は「適合」。 */
+  function mergedWith(overrides: Record<string, MergedResultItem["status"]>): MergedResult {
+    const ids = new Set<string>()
+    for (const item of BASELINE_ITEMS) for (const id of item.criteria) ids.add(id)
+
+    const items: MergedResultItem[] = [...ids].map((criterion, i) => ({
+      no: i + 1,
+      category: "知覚可能",
+      criterion,
+      name: `基準 ${criterion}`,
+      level: "A",
+      description: "",
+      source: "自動判定",
+      status: overrides[criterion] ?? "適合",
+      displayLabel: "確認OK",
+      notes: "",
+      conflict: false,
+    }))
+
+    return {
+      url: "https://example.com",
+      testDate: "2026-08-25 00:00",
+      summary: { pass: items.length, fail: 0, unknown: 0 },
+      items,
+    }
+  }
+
+  function render(entries: { label: string; merged: MergedResult }[]) {
+    const sheet = new ExcelJS.Workbook().addWorksheet("基本17項目")
+    populateBaselineSheet(sheet, entries, "2026-08-25 00:00")
+
+    const rows: string[][] = []
+    sheet.eachRow((row) => {
+      rows.push((row.values as unknown[]).slice(1).map((v) => String(v ?? "")))
+    })
+
+    const headerIndex = rows.findIndex((r) => r[0] === "No.")
+    return { sheet, rows, header: rows[headerIndex], items: rows.slice(headerIndex + 1) }
+  }
+
+  test("[正常] 17項目ぶんの行が出力されること", () => {
+    const { items } = render([{ label: "TOP", merged: mergedWith({}) }])
+    expect(items).toHaveLength(17)
+    expect(items[0][0]).toBe("1")
+    expect(items[16][0]).toBe("17")
+  })
+
+  test("[正常] 未確認が残る項目が「確認OK」に丸められず「一部未確認」になること", () => {
+    // No.6「キーボードだけで全機能にアクセスできる」は 5 基準対応。1 つだけ未確認にする
+    const { items } = render([
+      { label: "TOP", merged: mergedWith({ "2.4.7": "要確認" }) },
+    ])
+    const row6 = items.find((r) => r[0] === "6")!
+    expect(row6[3]).toContain("一部未確認")
+    expect(row6[3]).not.toContain("確認OK")
+    expect(row6[4]).toBe("5基準中 確認 4 / 未確認 1")
+  })
+
+  test("[正常] 不適合が 1 つでもあれば、他が適合でも要修正になること", () => {
+    const { items } = render([
+      { label: "TOP", merged: mergedWith({ "2.4.7": "不適合" }) },
+    ])
+    const row6 = items.find((r) => r[0] === "6")!
+    expect(row6[3]).toContain("要修正")
+    expect(row6[4]).toBe("5基準中 確認 4 / 不適合 1")
+  })
+
+  test("[正常] 単一URLでは内訳列と対応する達成基準列が出ること", () => {
+    const { header } = render([{ label: "TOP", merged: mergedWith({}) }])
+    expect(header).toEqual(["No.", "区分", "項目", "TOP", "内訳", "対応する達成基準"])
+  })
+
+  test("[正常] 複数URLではページごとに列が増え、内訳列が落ちること", () => {
+    const { header, items } = render([
+      { label: "TOP", merged: mergedWith({ "1.4.3": "不適合" }) },
+      { label: "施設案内", merged: mergedWith({}) },
+    ])
+    expect(header).toEqual(["No.", "区分", "項目", "TOP", "施設案内", "対応する達成基準"])
+
+    // No.11「文字と背景に十分なコントラスト比」= 1.4.3。ページごとに結果が分かれること
+    const row11 = items.find((r) => r[0] === "11")!
+    expect(row11[3]).toContain("要修正")
+    expect(row11[4]).toContain("確認OK")
+  })
+
+  test("[正常] 判定対象外の基準（2.4.10 / 4.1.1）が対応する達成基準列に出ないこと", () => {
+    const { items } = render([{ label: "TOP", merged: mergedWith({}) }])
+    const row10 = items.find((r) => r[0] === "10")!
+    const row13 = items.find((r) => r[0] === "13")!
+    expect(row10[5]).toBe("1.3.1, 2.4.6, 2.4.1")
+    expect(row13[5]).toBe("3.3.2, 4.1.2")
+  })
+
+  test("[正常] JIS 試験の代替にならない旨の注記が入ること", () => {
+    const { rows } = render([{ label: "TOP", merged: mergedWith({}) }])
+    expect(rows.some((r) => r[0].includes("JIS X 8341-3:2016"))).toBe(true)
+  })
+
+  test("[正常] 見出し3列とヘッダー行がウィンドウ枠で固定されること", () => {
+    const { sheet } = render([{ label: "TOP", merged: mergedWith({}) }])
+    expect(sheet.views[0]).toMatchObject({ state: "frozen", xSplit: 3 })
   })
 })
