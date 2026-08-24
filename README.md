@@ -205,8 +205,8 @@ docs/a11y-test/{日時}_{ドメイン}/
 ```
 
 実際の出力は [examples/site-report/](examples/site-report/) を参照してください。
-同梱の検証用ダミーサイト [examples/site/](examples/site/) の「壊れた版（ng）」と「直った版（ok）」各3ページを
-検査した実測結果と、生成された Excel チェックシートが置いてあります。
+同梱の検証用ダミーサイト [examples/site/](examples/site/)（「壊れた版（ng）」と「直った版（ok）」の各5ページ構成）のうち、
+主要3ページずつを検査した実測結果と、生成された Excel チェックシートが置いてあります。
 
 ---
 
