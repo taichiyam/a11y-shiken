@@ -10,6 +10,7 @@ ok 版（`ok/`）は同一レイアウトのまま、下表のすべての箇所
 |------|------|
 | axe: `rule-id` | `a11y-test.ts`（axe-core、WCAG タグのみ）で該当ルールが violation として発火する |
 | Visual: `checkXxx` | `a11y-visual-test.ts` の該当チェック関数で検出される |
+| Interactive: `testXxx` | `a11y-interactive-test.ts` の該当テスト関数で検出される（ブラウザ操作・ビューポート変更を伴う） |
 | AI判定 | 生成 AI（Claude）による文脈判定の対象。自動ツールでは検出されない |
 | 目視 | 人の操作・確認が必要 |
 
