@@ -1,10 +1,10 @@
 {
-  "url": "https://a11yc.com/city-komaru/practice/?criteria=2.1.2,1.1.1a_ng,1.4.3a_ng",
-  "testDate": "2026-08-18 09:00",
+  "url": "http://127.0.0.1:8765/ng/facility.html",
+  "testDate": "2026-08-21 02:09",
   "summary": {
-    "pass": 23,
-    "fail": 4,
-    "unknown": 28
+    "pass": 39,
+    "fail": 7,
+    "unknown": 9
   },
   "items": [
     {
@@ -14,10 +14,11 @@
       "name": "非テキストコンテンツ",
       "level": "A",
       "description": "img要素のalt属性の有無、alt値が適切か、装飾画像にalt=\"\"が設定されているか",
-      "source": "自動判定",
+      "source": "自動判定(Claude)",
       "status": "不適合",
       "displayLabel": "修正あり",
-      "notes": "Images must have alternative text（1件）"
+      "notes": "ギャラリーの画像3枚に alt 属性がなく、支援技術に内容が伝わらない; 証拠: HTML `<img src=\"../assets/room-hall.svg\">` / `<img src=\"../assets/room-music.svg\">` / `<img src=\"../assets/room-kitchen.svg\">`（alt 属性なし）、ツリー `- img`（名前なし）が3件",
+      "conflict": false
     },
     {
       "no": 2,
@@ -26,10 +27,11 @@
       "name": "音声のみ及び映像のみ（収録済）",
       "level": "A",
       "description": "音声のみ/映像のみのコンテンツに代替テキストまたは代替メディアが提供されているか",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "音声・映像コンテンツなし; 証拠: ng/facility.html に `<audio>` / `<video>` / `<iframe>` 要素が存在しない",
+      "conflict": false
     },
     {
       "no": 3,
@@ -38,10 +40,11 @@
       "name": "キャプション（収録済）",
       "level": "A",
       "description": "収録済み映像に正確なキャプション（字幕）が付与されているか",
-      "source": "要目視確認",
-      "status": "要確認",
-      "displayLabel": "未確認",
-      "notes": "<video> elements must have captions"
+      "source": "自動判定(Claude)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "音声・映像コンテンツなし; 証拠: ng/facility.html に `<audio>` / `<video>` / `<iframe>` 要素が存在しない",
+      "conflict": false
     },
     {
       "no": 4,
@@ -50,10 +53,11 @@
       "name": "音声解説又はメディアに対する代替（収録済）",
       "level": "A",
       "description": "映像コンテンツに音声解説またはテキストによる代替が提供されているか",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "音声・映像コンテンツなし; 証拠: ng/facility.html に `<audio>` / `<video>` / `<iframe>` 要素が存在しない",
+      "conflict": false
     },
     {
       "no": 5,
@@ -62,10 +66,11 @@
       "name": "キャプション（ライブ）",
       "level": "AA",
       "description": "ライブ映像にリアルタイムのキャプションが提供されているか",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "ライブ音声・映像コンテンツなし; 証拠: ng/facility.html に `<audio>` / `<video>` / `<iframe>` 要素が存在しない",
+      "conflict": false
     },
     {
       "no": 6,
@@ -74,10 +79,11 @@
       "name": "音声解説（収録済）",
       "level": "AA",
       "description": "収録済み映像に音声解説が提供されているか",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "音声・映像コンテンツなし; 証拠: ng/facility.html に `<audio>` / `<video>` / `<iframe>` 要素が存在しない",
+      "conflict": false
     },
     {
       "no": 7,
@@ -86,10 +92,11 @@
       "name": "情報及び関係性",
       "level": "A",
       "description": "見出し構造（h1-h6）の妥当性、フォーム要素のラベル紐付け、テーブルのth/caption",
-      "source": "自動判定(Visual)",
-      "status": "適合",
-      "displayLabel": "確認OK",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "不適合",
+      "displayLabel": "修正あり",
+      "notes": "貸室一覧の表が見出しセル（th）も caption も持たず、行・列の対応関係が支援技術に伝わらない。表題は表外の p 要素で示されている; 証拠: HTML `<td class=\"th-like\">部屋名</td>` と `<p class=\"table-title\">貸室一覧（定員・利用料金・主な設備）</p>`、ツリー `- table:` 配下が `- cell \"部屋名\"` のみで `- columnheader` / `- caption` が存在しない（同ページの開館時間表は `- rowheader \"平日\"` を持つ）",
+      "conflict": false
     },
     {
       "no": 8,
@@ -98,10 +105,11 @@
       "name": "意味のある順序",
       "level": "A",
       "description": "DOMの順序が視覚的な表示順序と一致しているか。CSSで位置変更した場合に読み上げ順序が意味を保つか",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "DOM順（ヘッダー→ナビ→本文→フッター）が視覚的な提示順と一致している; 証拠: ツリーが `- paragraph: - link \"つばめ台コミュニティセンター\"` → ナビの `- list:` → `- heading \"施設案内\" [level=1]` → フッターの `- paragraph: \"つばめ台コミュニティセンター 〒000-0000 …\"` の順に並ぶ",
+      "conflict": false
     },
     {
       "no": 9,
@@ -110,10 +118,11 @@
       "name": "感覚的な特徴",
       "level": "A",
       "description": "色・形・位置のみで情報を伝えていないか（例：「赤いボタンを押してください」）",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "形状・位置・音などの感覚的特徴のみに依存した説明文がない; 証拠: 本文テキスト（`- paragraph: 予約は利用日の3か月前から、窓口または電話で受け付けています。` 等）に「右の表」「丸いアイコン」等の感覚依存の指示が含まれない",
+      "conflict": false
     },
     {
       "no": 10,
@@ -125,7 +134,8 @@
       "source": "要目視確認",
       "status": "目視確認",
       "displayLabel": "未確認",
-      "notes": ""
+      "notes": "",
+      "conflict": false
     },
     {
       "no": 11,
@@ -134,10 +144,11 @@
       "name": "入力目的の特定",
       "level": "AA",
       "description": "フォーム要素に適切なautocomplete属性が設定されているか",
-      "source": "自動判定",
+      "source": "自動判定(Claude)",
       "status": "適合",
       "displayLabel": "確認OK",
-      "notes": ""
+      "notes": "利用者自身に関する情報を入力する欄がない（サイト内検索のみ）; 証拠: HTML の入力欄は `<input type=\"search\" name=\"q\" placeholder=\"例: 会議室\" aria-label=\"サイト内検索\">` の1つだけ",
+      "conflict": false
     },
     {
       "no": 12,
@@ -146,10 +157,11 @@
       "name": "色の使用",
       "level": "A",
       "description": "色だけで情報を伝えていないか。色以外の手がかり（テキスト、アイコン、下線等）があるか",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "本文リンクは下線で区別されており、色のみで意味を伝えている記述がない; 証拠: ng/style.css `.content a { color: #1d4ed8; text-decoration: underline; }`",
+      "conflict": false
     },
     {
       "no": 13,
@@ -161,7 +173,8 @@
       "source": "自動判定(Visual)",
       "status": "適合",
       "displayLabel": "確認OK",
-      "notes": ""
+      "notes": "自動再生する音声がない; 証拠: ng/facility.html に `<audio>` / `<video>` 要素が存在しない; 証拠: 自動再生メディア要素なし",
+      "conflict": false
     },
     {
       "no": 14,
@@ -170,10 +183,11 @@
       "name": "コントラスト（最低限）",
       "level": "AA",
       "description": "テキストと背景のコントラスト比が4.5:1以上（大文字テキストは3:1以上）",
-      "source": "自動判定",
-      "status": "不適合",
-      "displayLabel": "修正あり",
-      "notes": "Elements must meet minimum color contrast ratio thresholds（1件）"
+      "source": "要目視確認",
+      "status": "要確認",
+      "displayLabel": "未確認",
+      "notes": "axe-core は達成基準の一部のみ検証（color-contrast）。この pass だけでは適合と判定していません",
+      "conflict": false
     },
     {
       "no": 15,
@@ -182,10 +196,11 @@
       "name": "テキストのサイズ変更",
       "level": "AA",
       "description": "テキストを200%まで拡大しても、コンテンツや機能が損なわれないか",
-      "source": "自動判定(Interactive)",
-      "status": "不適合",
-      "displayLabel": "修正あり",
-      "notes": "200%ズーム時にテキストの切れが検出されました。overflow: hidden による切り取りが発生しています。"
+      "source": "要目視確認",
+      "status": "要確認",
+      "displayLabel": "未確認",
+      "notes": "axe-core は達成基準の一部のみ検証（meta-viewport）。この pass だけでは適合と判定していません",
+      "conflict": false
     },
     {
       "no": 16,
@@ -194,10 +209,11 @@
       "name": "文字画像",
       "level": "AA",
       "description": "テキストの代わりに画像化された文字を使用していないか（ロゴ等の例外を除く）",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "画像内に文字が含まれておらず、文字画像を使用していない; 証拠: assets/room-hall.svg / room-music.svg / room-kitchen.svg に `<text>` 要素が存在しない（図形パスのみ）",
+      "conflict": false
     },
     {
       "no": 17,
@@ -209,7 +225,8 @@
       "source": "自動判定(Interactive)",
       "status": "適合",
       "displayLabel": "確認OK",
-      "notes": ""
+      "notes": "証拠: 320x256pxで横スクロールバーは発生しませんでした。",
+      "conflict": false
     },
     {
       "no": 18,
@@ -218,10 +235,11 @@
       "name": "非テキストのコントラスト",
       "level": "AA",
       "description": "UIコンポーネントやグラフィックのコントラスト比が3:1以上か",
-      "source": "自動判定(Visual)",
-      "status": "適合",
-      "displayLabel": "確認OK",
-      "notes": ""
+      "source": "要目視確認",
+      "status": "目視確認",
+      "displayLabel": "未確認",
+      "notes": "",
+      "conflict": false
     },
     {
       "no": 19,
@@ -230,10 +248,11 @@
       "name": "テキストの間隔",
       "level": "AA",
       "description": "行の高さ1.5倍、段落間隔2倍、文字間隔0.12倍、単語間隔0.16倍に変更しても内容が損なわれないか",
-      "source": "自動判定",
-      "status": "適合",
-      "displayLabel": "確認OK",
-      "notes": ""
+      "source": "要目視確認",
+      "status": "目視確認",
+      "displayLabel": "未確認",
+      "notes": "",
+      "conflict": false
     },
     {
       "no": 20,
@@ -242,10 +261,11 @@
       "name": "ホバー又はフォーカスで表示されるコンテンツ",
       "level": "AA",
       "description": "ホバー/フォーカスで表示されるコンテンツが、解除可能・ホバー維持可能・自動非表示しないか",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "ホバー／フォーカスで追加表示されるコンテンツがない; 証拠: ng/style.css に `:hover` で要素を表示する宣言が存在しない",
+      "conflict": false
     },
     {
       "no": 21,
@@ -254,10 +274,11 @@
       "name": "キーボード",
       "level": "A",
       "description": "すべての機能がキーボードだけで操作可能か。Tab/Enter/Space/矢印キーで全要素にアクセスできるか",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "操作要素はネイティブの a / button / input のみで、独自のクリックハンドラを持つ要素がない; 証拠: ng/facility.html に `<script>` 要素・`onclick` 属性が存在せず、ツリーの操作要素は `- link` / `- button` / `- searchbox \"サイト内検索\"` のみ",
+      "conflict": false
     },
     {
       "no": 22,
@@ -267,9 +288,10 @@
       "level": "A",
       "description": "キーボード操作でフォーカスが特定の要素に閉じ込められないか",
       "source": "自動判定(Interactive)",
-      "status": "不適合",
-      "displayLabel": "修正あり",
-      "notes": "キーボードトラップの疑いがあります。操作可能な要素 30 個のうち 2 個（7%）を巡回した時点で循環が閉じました。ページの他の部分へキーボードで到達できない可能性があります。"
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "証拠: キーボードトラップは検出されませんでした。操作可能な要素 7 個のうち 8 個（114%）を巡回しました。",
+      "conflict": false
     },
     {
       "no": 23,
@@ -278,10 +300,11 @@
       "name": "文字キーのショートカット",
       "level": "A",
       "description": "文字キー単独のショートカットがある場合、無効化/再設定/フォーカス時のみ有効にする手段があるか",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Visual)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "単一文字キーのショートカットを実装していない; 証拠: ng/facility.html に `<script>` 要素・`accesskey` 属性が存在しない; 証拠: 文字キーショートカットは検出されず",
+      "conflict": false
     },
     {
       "no": 24,
@@ -290,10 +313,11 @@
       "name": "タイミング調整可能",
       "level": "A",
       "description": "制限時間のあるコンテンツで、延長/解除/事前通知の手段があるか",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "制限時間のあるコンテンツがない; 証拠: ng/facility.html に `<meta http-equiv=\"refresh\">` も `<script>` も存在しない",
+      "conflict": false
     },
     {
       "no": 25,
@@ -302,10 +326,11 @@
       "name": "一時停止、停止、非表示",
       "level": "A",
       "description": "自動的に動く/スクロールする/点滅するコンテンツに一時停止/停止の手段があるか",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "自動的に動く・点滅する・自動更新されるコンテンツがない; 証拠: ng/style.css に `animation` / `@keyframes` / `transition` の宣言が存在せず、HTML に `<marquee>` も `<script>` もない",
+      "conflict": false
     },
     {
       "no": 26,
@@ -314,10 +339,11 @@
       "name": "3回の閃光、又は閾値以下",
       "level": "A",
       "description": "1秒間に3回以上の閃光を放つコンテンツがないか",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "閃光を伴うコンテンツがない; 証拠: ng/facility.html に `<video>` 要素がなく、ng/style.css に `animation` / `@keyframes` の宣言も存在しない",
+      "conflict": false
     },
     {
       "no": 27,
@@ -326,10 +352,11 @@
       "name": "ブロックスキップ",
       "level": "A",
       "description": "ページ上部にスキップリンク、またはランドマーク（main, nav等）が設定されているか",
-      "source": "自動判定",
-      "status": "適合",
-      "displayLabel": "確認OK",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "不適合",
+      "displayLabel": "修正あり",
+      "notes": "ランドマークもスキップリンクも無く、繰り返されるヘッダー・ナビゲーションを読み飛ばす手段がない; 証拠: ツリーに `- banner:` / `- navigation:` / `- main:` / `- contentinfo:` がいずれも現れず（先頭は `- paragraph:`）、HTML はすべて `<div class=\"site-header\">` / `<div class=\"site-nav\">` / `<div class=\"content\">` / `<div class=\"site-footer\">`。`href=\"#main\"` のスキップリンクも存在しない",
+      "conflict": false
     },
     {
       "no": 28,
@@ -338,10 +365,11 @@
       "name": "ページタイトル",
       "level": "A",
       "description": "title要素が存在し、ページ内容を適切に説明しているか",
-      "source": "自動判定",
-      "status": "適合",
-      "displayLabel": "確認OK",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "不適合",
+      "displayLabel": "修正あり",
+      "notes": "title 要素が無く、ページを識別できるタイトルが存在しない; 証拠: ng/facility.html の `<head>` は `<meta charset>` / `<meta name=\"viewport\">` / `<link rel=\"stylesheet\">` のみで `<title>` 要素がない",
+      "conflict": false
     },
     {
       "no": 29,
@@ -350,10 +378,11 @@
       "name": "フォーカス順序",
       "level": "A",
       "description": "Tabキーでのフォーカス移動順序が論理的で意味のある順序になっているか",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Interactive)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "証拠: 7個の要素のフォーカス順序がDOM順序に従っており、論理的です。",
+      "conflict": false
     },
     {
       "no": 30,
@@ -362,10 +391,11 @@
       "name": "リンクの目的（コンテキスト内）",
       "level": "A",
       "description": "リンクテキストが単体またはコンテキスト内でリンク先を理解できるか",
-      "source": "自動判定",
+      "source": "自動判定(Claude)",
       "status": "適合",
       "displayLabel": "確認OK",
-      "notes": ""
+      "notes": "リンクテキスト単独で目的を判別できる; 証拠: ツリー `- link \"お問い合わせフォーム\"` / `- link \"トップ\"` / `- link \"施設案内\"`（「こちら」等の曖昧なリンクテキストなし）",
+      "conflict": false
     },
     {
       "no": 31,
@@ -374,10 +404,11 @@
       "name": "複数の手段",
       "level": "AA",
       "description": "ページへの到達手段が2つ以上あるか（ナビゲーション、サイトマップ、検索等）",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "グローバルナビゲーションとサイト内検索の2通りの手段でページに到達できる; 証拠: ツリーのナビ `- link \"トップ\"` / `- link \"お問い合わせ\"` と `- searchbox \"サイト内検索\"`",
+      "conflict": false
     },
     {
       "no": 32,
@@ -386,10 +417,11 @@
       "name": "見出し及びラベル",
       "level": "AA",
       "description": "見出し・ラベルが内容を適切に説明しているか",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "不適合",
+      "displayLabel": "修正あり",
+      "notes": "減免制度を説明するセクションの見出しが「その他のご案内」で、直下の内容（利用料金の減免）を説明していない; 証拠: ツリー `- heading \"その他のご案内\" [level=2]` の直後が `- paragraph: 次のいずれかに当てはまる団体は、利用料金が半額になります。窓口で減免申請書をご提出ください。`",
+      "conflict": false
     },
     {
       "no": 33,
@@ -399,9 +431,10 @@
       "level": "AA",
       "description": "キーボードフォーカスが視覚的に確認できるか。outline: noneでフォーカスインジケーターが消されていないか",
       "source": "自動判定(Interactive)",
-      "status": "適合",
-      "displayLabel": "確認OK",
-      "notes": ""
+      "status": "不適合",
+      "displayLabel": "修正あり",
+      "notes": "7個中0個でのみフォーカスが視認可能。多くの要素でフォーカスインジケータが不足しています。",
+      "conflict": false
     },
     {
       "no": 34,
@@ -413,7 +446,8 @@
       "source": "自動判定(Interactive)",
       "status": "適合",
       "displayLabel": "確認OK",
-      "notes": ""
+      "notes": "証拠: position: fixed または sticky の要素が見つかりませんでした。フォーカスの不明瞭化のリスクはありません。",
+      "conflict": false
     },
     {
       "no": 35,
@@ -422,10 +456,11 @@
       "name": "ポインタのジェスチャ",
       "level": "A",
       "description": "マルチタッチやパス依存のジェスチャが必要な機能に、シングルポインタの代替手段があるか",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "マルチポイント・軌跡ベースのジェスチャーを使う操作がない; 証拠: ng/facility.html に `<script>` 要素が存在せず、操作はリンク・ボタンの単一クリックのみ",
+      "conflict": false
     },
     {
       "no": 36,
@@ -434,10 +469,11 @@
       "name": "ポインタのキャンセル",
       "level": "A",
       "description": "mousedown/touchstartだけで機能が実行されず、キャンセル手段があるか",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "ネイティブ要素の既定動作のみで、mousedown で確定する独自実装がない; 証拠: ng/facility.html に `<script>` 要素・`onmousedown` 属性が存在しない",
+      "conflict": false
     },
     {
       "no": 37,
@@ -449,7 +485,8 @@
       "source": "自動判定(Visual)",
       "status": "適合",
       "displayLabel": "確認OK",
-      "notes": ""
+      "notes": "証拠: すべての要素で visible text が accessible name に含まれている",
+      "conflict": false
     },
     {
       "no": 38,
@@ -461,7 +498,8 @@
       "source": "自動判定(Visual)",
       "status": "適合",
       "displayLabel": "確認OK",
-      "notes": ""
+      "notes": "デバイスの動き・利用者の動きで起動する機能がない; 証拠: ng/facility.html に `<script>` 要素が存在しない（devicemotion / deviceorientation の利用なし）; 証拠: 動きによる起動は検出されず",
+      "conflict": false
     },
     {
       "no": 39,
@@ -473,7 +511,8 @@
       "source": "自動判定(Visual)",
       "status": "適合",
       "displayLabel": "確認OK",
-      "notes": ""
+      "notes": "ドラッグ操作を要する機能がない; 証拠: ng/facility.html に `<script>` 要素・`draggable` 属性が存在しない; 証拠: ドラッグ操作は検出されず",
+      "conflict": false
     },
     {
       "no": 40,
@@ -482,10 +521,11 @@
       "name": "ターゲットサイズ（最小）",
       "level": "AA",
       "description": "操作要素のターゲットサイズが最低24x24pxあるか（インラインリンク等の例外を除く）",
-      "source": "自動判定",
+      "source": "自動判定(Visual)",
       "status": "適合",
       "displayLabel": "確認OK",
-      "notes": ""
+      "notes": "証拠: 24x24px 未満の操作要素なし",
+      "conflict": false
     },
     {
       "no": 41,
@@ -494,10 +534,11 @@
       "name": "ページの言語",
       "level": "A",
       "description": "html要素にlang属性が正しく設定されているか",
-      "source": "自動判定",
+      "source": "自動判定(Claude)",
       "status": "適合",
       "displayLabel": "確認OK",
-      "notes": ""
+      "notes": "ページの言語が指定されている; 証拠: HTML `<html lang=\"ja\">`",
+      "conflict": false
     },
     {
       "no": 42,
@@ -506,10 +547,11 @@
       "name": "一部分の言語",
       "level": "AA",
       "description": "ページの主言語と異なる言語の部分にlang属性が設定されているか",
-      "source": "自動判定",
+      "source": "自動判定(Claude)",
       "status": "適合",
       "displayLabel": "確認OK",
-      "notes": ""
+      "notes": "ページ本文に他言語の語句がない; 証拠: ツリーの本文テキストはすべて日本語で、外国語表記が含まれない",
+      "conflict": false
     },
     {
       "no": 43,
@@ -521,7 +563,8 @@
       "source": "自動判定(Interactive)",
       "status": "適合",
       "displayLabel": "確認OK",
-      "notes": ""
+      "notes": "証拠: 7個の要素でフォーカス前後の URL・DOM に変化がないことを確認しました。",
+      "conflict": false
     },
     {
       "no": 44,
@@ -533,7 +576,8 @@
       "source": "自動判定(Interactive)",
       "status": "適合",
       "displayLabel": "確認OK",
-      "notes": ""
+      "notes": "証拠: 1個のフォームフィールド（テキスト入力・select・checkbox / radio）で値の入力・変更前後の URL・DOM に変化がないことを確認しました。",
+      "conflict": false
     },
     {
       "no": 45,
@@ -545,7 +589,8 @@
       "source": "要目視確認",
       "status": "目視確認",
       "displayLabel": "未確認",
-      "notes": ""
+      "notes": "",
+      "conflict": false
     },
     {
       "no": 46,
@@ -557,7 +602,8 @@
       "source": "要目視確認",
       "status": "目視確認",
       "displayLabel": "未確認",
-      "notes": ""
+      "notes": "",
+      "conflict": false
     },
     {
       "no": 47,
@@ -569,7 +615,8 @@
       "source": "要目視確認",
       "status": "目視確認",
       "displayLabel": "未確認",
-      "notes": ""
+      "notes": "",
+      "conflict": false
     },
     {
       "no": 48,
@@ -578,10 +625,11 @@
       "name": "エラーの特定",
       "level": "A",
       "description": "入力エラーが自動検出された場合、エラー箇所と内容がテキストで説明されているか",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "入力エラーを検出・通知する仕組みがない（サイト内検索のみで必須・書式制約なし）; 証拠: HTML の唯一の入力欄 `<input type=\"search\" name=\"q\" … aria-label=\"サイト内検索\">` に `required` / `pattern` がなく、`<script>` 要素も存在しない",
+      "conflict": false
     },
     {
       "no": 49,
@@ -590,10 +638,11 @@
       "name": "ラベル又は説明",
       "level": "A",
       "description": "フォーム要素にラベルまたは入力説明があるか。label要素の紐付けと説明の適切さ",
-      "source": "自動判定",
-      "status": "適合",
-      "displayLabel": "確認OK",
-      "notes": ""
+      "source": "要目視確認",
+      "status": "要確認",
+      "displayLabel": "未確認",
+      "notes": "axe-core は達成基準の一部のみ検証（form-field-multiple-labels）。この pass だけでは適合と判定していません",
+      "conflict": false
     },
     {
       "no": 50,
@@ -602,10 +651,11 @@
       "name": "エラー修正の提案",
       "level": "AA",
       "description": "入力エラーが検出された場合、修正方法の提案が提示されるか",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "入力エラーを検出する仕組みがないため修正提案の対象がない; 証拠: HTML の唯一の入力欄 `<input type=\"search\" name=\"q\" … aria-label=\"サイト内検索\">` に `required` / `pattern` がなく、`<script>` 要素も存在しない",
+      "conflict": false
     },
     {
       "no": 51,
@@ -614,10 +664,11 @@
       "name": "エラー回避（法的、金融、データ）",
       "level": "AA",
       "description": "法的/金融的な取引やデータ送信の前に、確認・修正・取消が可能か",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "法的行為・金銭取引・利用者制御データの変更を伴う送信がない; 証拠: HTML のフォームは `<form class=\"search-form\" action=\"#\" method=\"get\">`（サイト内検索）のみ",
+      "conflict": false
     },
     {
       "no": 52,
@@ -626,10 +677,11 @@
       "name": "冗長な入力",
       "level": "A",
       "description": "同一プロセス内で以前に入力された情報の再入力を求めないか（自動入力、選択肢からの選択等の手段があるか）",
-      "source": "要目視確認",
-      "status": "目視確認",
-      "displayLabel": "未確認",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "適合",
+      "displayLabel": "確認OK",
+      "notes": "同じ情報を再入力させる工程がない; 証拠: HTML の入力欄は `<input type=\"search\" name=\"q\">` の1つのみで多段階工程がない",
+      "conflict": false
     },
     {
       "no": 53,
@@ -641,7 +693,8 @@
       "source": "自動判定(Visual)",
       "status": "適合",
       "displayLabel": "確認OK",
-      "notes": ""
+      "notes": "認証を要する機能がない; 証拠: ng/facility.html に `<input type=\"password\">` 要素・ログインフォームが存在しない; 証拠: パスワード入力なし（該当コンテンツなし）",
+      "conflict": false
     },
     {
       "no": 54,
@@ -650,10 +703,11 @@
       "name": "名前（name）、役割（role）及び値（value）",
       "level": "A",
       "description": "カスタムUIコンポーネントに適切なrole、name、stateがARIAで設定されているか",
-      "source": "自動判定",
-      "status": "適合",
-      "displayLabel": "確認OK",
-      "notes": ""
+      "source": "自動判定(Claude)",
+      "status": "不適合",
+      "displayLabel": "修正あり",
+      "notes": "検索の送信ボタンにアクセシブル名がなく、支援技術に用途が伝わらない; 証拠: ツリー `- button`（引用符内の名前なし）。HTML `<button type=\"submit\">` の中身は `aria-hidden=\"true\"` の SVG のみでテキストがない",
+      "conflict": false
     },
     {
       "no": 55,
@@ -662,10 +716,11 @@
       "name": "ステータスメッセージ",
       "level": "AA",
       "description": "成功/エラー/進行状況等のステータスメッセージがrole=\"status\"やaria-liveで支援技術に伝わるか",
-      "source": "自動判定(Visual)",
+      "source": "自動判定(Claude)",
       "status": "適合",
       "displayLabel": "確認OK",
-      "notes": ""
+      "notes": "動的に更新されるステータスメッセージがない; 証拠: ng/facility.html に `<script>` 要素・`aria-live` / `role=\"status\"` / `role=\"alert\"` 属性が存在しない",
+      "conflict": false
     }
   ]
 }

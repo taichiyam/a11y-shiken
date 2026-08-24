@@ -202,8 +202,9 @@ docs/a11y-test/{日時}_{ドメイン}/
 └── data/                                        ← 生 JSON・スクリーンショット（証跡）
 ```
 
-実際の出力は [examples/komaru/](examples/komaru/) を参照してください。
-同じサイトの壊れた版と直った版を検査した実測結果と、生成された Excel チェックシートが置いてあります。
+実際の出力は [examples/site-report/](examples/site-report/) を参照してください。
+同梱の検証用ダミーサイト [examples/site/](examples/site/) の「壊れた版（ng）」と「直った版（ok）」各3ページを
+検査した実測結果と、生成された Excel チェックシートが置いてあります。
 
 ---
 
