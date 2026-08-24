@@ -177,19 +177,15 @@ docs/a11y-test/20260825010933_taichiyam-github-io/
 
 ### 4-1. HTML ビューア — まず「どこから直すか」を見る
 
-`report/index.html` はファイルを直接ダブルクリックしても中身が表示されません。
-ブラウザの `file://` では JavaScript の `fetch` がブロックされ、Markdown を読み込めないためです。**ローカルサーバー経由で開いてください。**
+`report/index.html` をブラウザで開きます。**ダブルクリックするだけで表示されます。**サーバーの起動は必要ありません。
 
 ```bash
-bunx serve docs/a11y-test/20260825010933_taichiyam-github-io/report
+open docs/a11y-test/20260825010933_taichiyam-github-io/report/index.html
 ```
 
-表示された `http://localhost:3000/`（ポートは環境により変わります）をブラウザで開きます。
 左サイドバーからページを選ぶと、右ペインにレポートが表示されます。
 
-> Node.js が入っていれば `npx serve ...` でも同じです。bun だけの環境では `bunx serve` を使ってください。
-
-サイドバーに **基本17項目ビュー**が並んでいない場合は、`report/markdown/ng-baseline-17.md` を直接開いてください（VSCode の Markdown プレビューでも読めます）。
+このファイルは Markdown 本文も描画用ライブラリもすべて 1 ファイルに埋め込まれているため、オフラインでも表示でき、単体で他の人に渡すこともできます。
 
 **このビューから読み始めます。** WCAG 2.2 の 55 項目をそのまま渡されても、どれが致命的でどれが後回しでよいかは判断できません。
 基本17項目ビューは、55 項目の判定結果をデジタル庁『ウェブアクセシビリティ導入ガイドブック』の 17 項目に集約したものです。
@@ -394,11 +390,10 @@ curl -I https://taichiyam.github.io/a11y-shiken-demo-site/ng/
 
 ### `report/index.html` を開いても何も表示されない
 
-`file://` で開いています。ブラウザが `fetch` をブロックするため、Markdown を読み込めません。
-手順 4-1 のとおり、`bunx serve` などでローカルサーバー経由で開いてください。
+`index.html` は Markdown も描画用ライブラリもすべて埋め込んだ単一ファイルなので、`file://` で開けばそのまま表示されます。オフラインでも動きます。
 
-サーバー経由でも本文が出ない場合は、ネットワークが制限されている可能性があります。
-このビューアは marked.js と DOMPurify を CDN から読み込むためです。オフライン環境では `report/markdown/*.md` を直接開いてください。
+それでも表示されない場合は、生成が途中で失敗している可能性があります。`report/markdown/*.md` は独立したファイルとして残っているので、そちらを直接開けば内容は読めます（VSCode の Markdown プレビューでも読めます）。
+検査をやり直す場合は、`bun scripts/generate-report-html.ts` の実行時にエラーが出ていないかを確認してください。
 
 ### 「未確認」が多すぎて結果が使えないように見える
 
