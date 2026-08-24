@@ -30,20 +30,61 @@ export interface PageEntry {
 }
 
 /**
- * `</script>` を含む文字列を <script> 要素の中に置くと、そこで要素が閉じてしまう。
- * 対象サイトの HTML スニペットを引用したレポートで実際に起こりうるため必ず通す。
+ * JSON 文字列を <script> 要素の中に安全に置けるようエスケープする。
+ *
+ * `</script>` だけを潰しても足りない。HTML の script tokenizer は `<!--` のあとに `<script` が
+ * 現れると script data double escaped state に入り、そこから先は本来の `</script>` すら
+ * 閉じタグとして扱わなくなる。結果、スクリプト全体が実行されずページが描画されない。
+ * アクセシビリティレポートは対象サイトの HTML スニペットをそのまま引用するため、
+ * `<!--<script>` は現実に起こりうる入力である（実際に Chromium で再現を確認した）。
+ *
+ * そこで個別のパターンを潰すのではなく `<` を一律 < に置き換える。JSON 文字列リテラルの
+ * 中では < は `<` と等価に解釈されるため、埋め込んだ本文の内容は変わらない。
+ *
+ * あわせて U+2028 / U+2029 も escape する。これらは JSON では有効な文字だが、
+ * ES2019 より前の JavaScript では行終端子として扱われ、古いパーサーで構文エラーになる。
  */
-export function escapeForScriptTag(source: string): string {
-  return source.replace(/<\/script/gi, "<\\/script");
+export function escapeJsonForScriptTag(json: string): string {
+  return json
+    .replace(/</g, "\\u003C")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
+/**
+ * ライブラリ本体を <script> に埋め込めるか検査する。
+ *
+ * JSON と違いライブラリは生の JavaScript なので、`<` を一律置換すると比較演算子まで
+ * 壊れてしまう。埋め込めない文字列を含んでいないことを確認したうえでそのまま入れる。
+ * npm 由来の信頼できるコードだが、バージョンアップで混入したときに黙って壊れないよう
+ * 明示的に落とす。
+ */
+export function assertEmbeddableScript(source: string, name: string): void {
+  if (/<\/script/i.test(source)) {
+    throw new Error(`${name} に </script> が含まれるため埋め込めません`);
+  }
+  // `<!--` は単体なら script data escaped state に入るだけで閉じタグは効く。
+  // 危険なのは、そのあとに `<script` が続いて double escaped state へ進む場合で、
+  // そこから先は本来の `</script>` すら閉じタグとして扱われなくなる。
+  // 厳密な状態機械までは追わず、両方を含むライブラリは埋め込み対象から外す。
+  if (/<!--/.test(source) && /<script/i.test(source)) {
+    throw new Error(
+      `${name} に <!-- と <script が両方含まれるため埋め込めません（script tokenizer が壊れる可能性があります）`
+    );
+  }
 }
 
 /**
  * ライブラリ末尾の sourceMappingURL コメントを取り除く。
  * 残したまま file:// で開くと、存在しない .map を探しに行って
  * コンソールに ERR_FILE_NOT_FOUND が出る（描画自体には影響しない）。
+ *
+ * 行頭の空白は [ \t] に限定する。`\s` だと改行まで食べて直前の空行を巻き込むため。
  */
 export function stripSourceMappingUrl(source: string): string {
-  return source.replace(/^\s*\/\/[#@]\s*sourceMappingURL=.*$/gm, "");
+  return source
+    .replace(/^[ \t]*\/\/[#@][ \t]*sourceMappingURL=.*$/gm, "")
+    .replace(/\/\*[#@][ \t]*sourceMappingURL=[\s\S]*?\*\//g, "");
 }
 
 export interface BuildOptions {
@@ -55,12 +96,16 @@ export interface BuildOptions {
 
 export function buildHtml({ template, libraries, pages, contents }: BuildOptions): string {
   const libTags = libraries
-    .map((lib) => `<script>\n${escapeForScriptTag(stripSourceMappingUrl(lib))}\n</script>`)
+    .map((lib, i) => {
+      const body = stripSourceMappingUrl(lib);
+      assertEmbeddableScript(body, `ライブラリ ${i + 1}`);
+      return `<script>\n${body}\n</script>`;
+    })
     .join("\n  ");
 
   const data = [
-    `const pages = ${escapeForScriptTag(JSON.stringify(pages, null, 2))};`,
-    `  const pageContents = ${escapeForScriptTag(JSON.stringify(contents))};`,
+    `const pages = ${escapeJsonForScriptTag(JSON.stringify(pages, null, 2))};`,
+    `  const pageContents = ${escapeJsonForScriptTag(JSON.stringify(contents))};`,
   ].join("\n");
 
   let html = template;

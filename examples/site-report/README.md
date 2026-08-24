@@ -59,7 +59,7 @@ ng 版の3ページすべてで共通して検出された問題:
 
 | | |
 |---|---|
-| `report/index.html` | **HTML ビューア**（サイドバー付き。下記のとおりローカルサーバー経由で開く） |
+| `report/index.html` | **HTML ビューア**（サイドバー付き。単一ファイルなのでブラウザで直接開ける） |
 | `report/index.md` | 目次 |
 | `report/markdown/_index.md` | 概要 + ページ別サマリー |
 | `report/markdown/{ページ}.md` | 55項目の統合レポート（修正箇所の詳細・推奨対応つき） |
