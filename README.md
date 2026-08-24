@@ -25,7 +25,7 @@ not that it is genuine — a fabricated quote would still pass this gate),
 an axe-core pass on a criterion its rules only partially cover is recorded as unverified instead of as conformance,
 and a baseline item is never rounded up to "OK" while any of its criteria remain unverified. It reports; it does not auto-fix.
 
-> ## ⚠️ v0.1.0 — ベータ版です
+> ## ⚠️ v0.2.0 — ベータ版です
 >
 > - **正式なアクセシビリティ試験（JIS X 8341-3:2016）の代替にはなりません。** 適合表明の根拠には使わないでください
 > - **55 項目のうち一部は生成 AI が判定しています。その精度は自前の検証サイトでしか測っていません**（[精度の実測](#精度の実測) / [制限事項](#制限事項)）
@@ -254,7 +254,7 @@ axe-core・Playwright による自動チェックは、すべて手元で完結�
 
 ## ロードマップ
 
-v0.1.0 は「動く最小構成」です。以下は未実装で、検討中のものです。
+以下は未実装で、検討中のものです（変更履歴は [CHANGELOG](CHANGELOG.md)）。
 
 | | 内容 |
 |---|---|
