@@ -10,7 +10,7 @@
       "name": "a11y-shiken",
       "source": "./",
       "description": "URL を渡すと WCAG 2.2 Level A+AA の 55 項目チェックシートを埋め、ディレクター向けの Excel と開発者向けの Markdown を出力する Claude Code スキル。デジタル庁『ウェブアクセシビリティ導入ガイドブック』の基本17項目ビューつき。ベータ版。",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "author": {
         "name": "taichiyam"
       },
