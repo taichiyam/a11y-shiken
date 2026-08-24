@@ -104,7 +104,7 @@ interface MergedResult {
 
 // --- 集約 ---
 
-type BaselineStatus = "要修正" | "確認OK" | "一部未確認" | "判定対象外"
+export type BaselineStatus = "要修正" | "確認OK" | "一部未確認" | "判定対象外"
 
 interface CriterionState {
   id: string

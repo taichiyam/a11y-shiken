@@ -64,7 +64,7 @@ ng 版の3ページすべてで共通して検出された問題:
 | `report/markdown/_index.md` | 概要 + ページ別サマリー |
 | `report/markdown/{ページ}.md` | 55項目の統合レポート（修正箇所の詳細・推奨対応つき） |
 | `report/markdown/{ページ}-baseline-17.md` | **基本17項目ビュー**（人が読む形式） |
-| `report/a11y-checklist-tsubamedai-2026-08-21.xlsx` | Excel チェックシート（まとめ + 各ページの詳細） |
+| `report/a11y-checklist-tsubamedai-2026-08-21.xlsx` | Excel チェックシート（まとめ + 各ページの詳細）。**2026-08-21 時点の固定成果物で、後に追加された「基本17項目」シートは含まない**（再生成には同梱していない生 JSON が必要なため） |
 | `data/{ページ}/merged-result.json` | 55項目の統合判定結果（Single Source of Truth） |
 | `data/{ページ}/baseline-17.json` | 基本17項目ビュー（機械可読） |
 | `data/{ページ}/claude-overrides.json` | 生成 AI の判定と、その根拠に引用した証拠 |

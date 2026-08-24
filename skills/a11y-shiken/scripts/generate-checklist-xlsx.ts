@@ -3,6 +3,8 @@
 import ExcelJS from "exceljs";
 import { readFileSync, existsSync, writeFileSync, mkdirSync } from "fs";
 import { resolve, dirname, isAbsolute } from "path";
+import { BASELINE_ITEMS, aggregate } from "./generate-baseline-view";
+import type { BaselineStatus } from "./generate-baseline-view";
 
 // --- CLI ---
 
@@ -167,7 +169,7 @@ export function sanitizeClaudeOverrides(raw: ClaudeOverridesResult): {
 
 // --- マニフェスト JSON 型定義 ---
 
-interface ManifestEntry {
+export interface ManifestEntry {
   label: string;
   url: string;
   axeJson: string;
@@ -176,7 +178,7 @@ interface ManifestEntry {
   overridesJson?: string;
 }
 
-interface Manifest {
+export interface Manifest {
   testDate: string;
   entries: ManifestEntry[];
 }
@@ -1415,19 +1417,195 @@ function populateSummarySheet(
   sheet.getColumn(8).width = 16;
 }
 
+// --- 基本17項目シート（デジタル庁ガイドブック） ---
+
+const BASELINE_ICON: Record<BaselineStatus, string> = {
+  要修正: "❌ 要修正",
+  確認OK: "✅ 確認OK",
+  一部未確認: "⚠️ 一部未確認",
+  判定対象外: "— 判定対象外",
+};
+
+function baselineFill(status: BaselineStatus): ExcelJS.FillPattern {
+  const bg = {
+    要修正: COLORS.fail,
+    確認OK: COLORS.pass,
+    一部未確認: COLORS.incomplete,
+    判定対象外: COLORS.manual,
+  }[status];
+  return { type: "pattern", pattern: "solid", fgColor: { argb: bg } };
+}
+
+function baselineFont(status: BaselineStatus): Partial<ExcelJS.Font> {
+  const color = {
+    要修正: COLORS.failBorder,
+    確認OK: COLORS.passBorder,
+    一部未確認: COLORS.incompleteBorder,
+    判定対象外: COLORS.manualBorder,
+  }[status];
+  return { color: { argb: color }, bold: true };
+}
+
+/** 「5基準中 確認 3 / 不適合 1 / 未確認 1」形式の内訳文字列を組み立てる。 */
+function baselineBreakdown(r: ReturnType<typeof aggregate>): string {
+  const inScope = r.confirmed + r.failed + r.unconfirmed;
+  if (inScope === 0) return "判定対象の基準なし";
+
+  const parts: string[] = [];
+  if (r.confirmed > 0) parts.push(`確認 ${r.confirmed}`);
+  if (r.failed > 0) parts.push(`不適合 ${r.failed}`);
+  if (r.unconfirmed > 0) parts.push(`未確認 ${r.unconfirmed}`);
+  return `${inScope}基準中 ${parts.join(" / ")}`;
+}
+
+export interface BaselineSheetEntry {
+  label: string;
+  merged: MergedResult;
+}
+
+/**
+ * 55 項目の判定を、デジタル庁『ウェブアクセシビリティ導入ガイドブック』の基本17項目へ集約したシートを書く。
+ *
+ * 行は常に 17 項目で固定し、ページが増えたときは列方向に伸ばす。横に読むことで
+ * 「どのページでも直っていない共通問題」と「特定ページだけの問題」を見分けられる。
+ *
+ * 集約ロジックは generate-baseline-view.ts の aggregate() をそのまま使う。複製しないことで
+ * Excel と Markdown の結果が食い違う余地をなくしている。特に「一部しか確認できていない項目を
+ * 確認OK に丸めない」ルールは、間違った合格を生まないための中核なので必ず共有する。
+ */
+export function populateBaselineSheet(
+  sheet: ExcelJS.Worksheet,
+  entries: BaselineSheetEntry[],
+  dateStr: string
+): void {
+  if (entries.length === 0) {
+    throw new Error("基本17項目シートの生成には 1 件以上のエントリが必要です");
+  }
+  const isSingle = entries.length === 1;
+
+  // 各ページ × 17項目の集約結果を先に作る
+  const aggregated = entries.map((entry) => {
+    const byId = new Map(entry.merged.items.map((i) => [i.criterion, i]));
+    return { label: entry.label, results: BASELINE_ITEMS.map((item) => aggregate(item, byId)) };
+  });
+
+  // メタ情報
+  const metaRows = [
+    ["テスト日時", dateStr],
+    ["集約元", "デジタル庁 ウェブアクセシビリティ導入ガイドブック 2024-03-29版 §3.1・§3.2"],
+    ["対象URL数", String(entries.length)],
+  ];
+  for (const [label, value] of metaRows) {
+    const row = sheet.addRow([label, value]);
+    row.getCell(1).font = { bold: true };
+  }
+
+  // ページごとのサマリー
+  for (const page of aggregated) {
+    const count = (s: BaselineStatus) => page.results.filter((r) => r.status === s).length;
+    const summary = `❌ 要修正 ${count("要修正")} / ⚠️ 一部未確認 ${count("一部未確認")} / ✅ 確認OK ${count("確認OK")}`;
+    const row = sheet.addRow([isSingle ? "サマリー" : page.label, summary]);
+    row.getCell(1).font = { bold: true };
+  }
+
+  const noteRow = sheet.addRow([
+    "この結果は正式なアクセシビリティ試験（JIS X 8341-3:2016）の代替にはなりません。",
+  ]);
+  noteRow.getCell(1).font = { italic: true, color: { argb: "FF666666" } };
+  sheet.addRow([]);
+
+  // ヘッダー行
+  const pageHeaders = aggregated.map((p) => p.label);
+  const headers = isSingle
+    ? ["No.", "区分", "項目", pageHeaders[0], "内訳", "対応する達成基準"]
+    : ["No.", "区分", "項目", ...pageHeaders, "対応する達成基準"];
+
+  const headerRow = sheet.addRow(headers);
+  const headerRowNumber = headerRow.number;
+  headerRow.eachCell((cell) => {
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: COLORS.summaryHeaderBg } };
+    cell.font = { bold: true, color: { argb: COLORS.headerFont } };
+    cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+    cell.border = THIN_BORDER;
+  });
+
+  // データ行（17項目固定）
+  for (let i = 0; i < BASELINE_ITEMS.length; i++) {
+    const item = BASELINE_ITEMS[i];
+    const perPage = aggregated.map((p) => p.results[i]);
+
+    // 判定対象内の基準は全ページで同じなので先頭ページから引く
+    const criteriaIds = perPage[0].criteria.filter((c) => c.inScope).map((c) => c.id);
+
+    const values = isSingle
+      ? [
+          item.no, item.severity, item.title,
+          BASELINE_ICON[perPage[0].status],
+          baselineBreakdown(perPage[0]),
+          criteriaIds.join(", "),
+        ]
+      : [
+          item.no, item.severity, item.title,
+          ...perPage.map((r) => BASELINE_ICON[r.status]),
+          criteriaIds.join(", "),
+        ];
+
+    const row = sheet.addRow(values);
+    const statusColumns = isSingle ? [4] : perPage.map((_, idx) => 4 + idx);
+
+    row.eachCell((cell, colNumber) => {
+      cell.alignment = { vertical: "top", wrapText: true };
+      cell.border = THIN_BORDER;
+
+      const statusIndex = statusColumns.indexOf(colNumber);
+      if (statusIndex >= 0) {
+        const status = perPage[statusIndex].status;
+        cell.fill = baselineFill(status);
+        cell.font = baselineFont(status);
+        cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
+      }
+    });
+  }
+
+  // 列幅（ページ列はアイコン中心なので詰める）
+  sheet.getColumn(1).width = 5;
+  sheet.getColumn(2).width = 8;
+  sheet.getColumn(3).width = 38;
+  if (isSingle) {
+    sheet.getColumn(4).width = 16;
+    sheet.getColumn(5).width = 30;
+    sheet.getColumn(6).width = 34;
+  } else {
+    for (let i = 0; i < aggregated.length; i++) sheet.getColumn(4 + i).width = 14;
+    sheet.getColumn(4 + aggregated.length).width = 34;
+  }
+
+  // ページ数が増えても何の項目を見ているか分かるよう、No./区分/項目を固定する
+  sheet.views = [{ state: "frozen", xSplit: 3, ySplit: headerRowNumber }];
+
+  sheet.autoFilter = {
+    from: { row: headerRowNumber, column: 1 },
+    to: { row: headerRowNumber + BASELINE_ITEMS.length, column: headers.length },
+  };
+}
+
 // --- マルチURL Excel 生成 ---
 
-async function generateMultiUrlExcel(manifest: Manifest, outputPath: string): Promise<void> {
+export async function generateMultiUrlExcel(manifest: Manifest, outputPath: string): Promise<void> {
   const workbook = new ExcelJS.Workbook();
   const dateStr = formatDateStr(manifest.testDate);
   const sheetNames = new Set<string>();
 
-  // 1. 「まとめ」シートをプレースホルダーとして先に追加
+  // 1. 「まとめ」「基本17項目」シートをプレースホルダーとして先に追加
+  //    （ExcelJS はシートを追加順に並べるため、中身を埋めるより先に場所を確保する）
   sheetNames.add("まとめ");
   const summarySheet = workbook.addWorksheet("まとめ");
+  sheetNames.add("基本17項目");
+  const baselineSheet = workbook.addWorksheet("基本17項目");
 
   // 2. 各URLの詳細シートを生成 + merged-result.json 出力
   const summaries: UrlSummary[] = [];
+  const baselineEntries: BaselineSheetEntry[] = [];
 
   for (const entry of manifest.entries) {
     const sheetName = sanitizeSheetName(entry.label, sheetNames);
@@ -1454,10 +1632,12 @@ async function generateMultiUrlExcel(manifest: Manifest, outputPath: string): Pr
     const mergedResult = buildMergedResult(entry.url, dateStr, axeData, visualData, interactiveData, claudeOverrides);
     const mergedOutputPath = resolve(dirname(entry.axeJson), "merged-result.json");
     exportMergedResult(mergedResult, mergedOutputPath);
+    baselineEntries.push({ label: entry.label, merged: mergedResult });
   }
 
-  // 3. 「まとめ」シートにサマリーを書き込み
+  // 3. 「まとめ」「基本17項目」シートに書き込み
   populateSummarySheet(summarySheet, summaries, dateStr);
+  populateBaselineSheet(baselineSheet, baselineEntries, dateStr);
 
   // 4. 保存
   await workbook.xlsx.writeFile(outputPath);
@@ -1465,7 +1645,7 @@ async function generateMultiUrlExcel(manifest: Manifest, outputPath: string): Pr
   // 5. コンソール出力
   console.log(`Excel チェックシートを生成しました: ${outputPath}`);
   console.log(`  - ${manifest.entries.length} URL × ${WCAG_CRITERIA.length} 項目`);
-  console.log(`  - シート: まとめ + ${summaries.map((s) => s.sheetName).join(", ")}`);
+  console.log(`  - シート: まとめ + 基本17項目 + ${summaries.map((s) => s.sheetName).join(", ")}`);
 
   const totalPass = summaries.reduce((a, s) => a + s.passCount, 0);
   const totalFail = summaries.reduce((a, s) => a + s.failCount, 0);
@@ -1485,15 +1665,21 @@ async function generateSingleUrlExcel(
   const workbook = new ExcelJS.Workbook();
   const dateStr = formatDateStr(axeData.timestamp);
 
+  // マニフェスト経路と同じく、基本17項目シートを詳細シートより前に置く
+  const baselineSheet = workbook.addWorksheet("基本17項目");
   const summary = generateDetailSheet(
     workbook, "チェックシート", axeData.url, dateStr,
     axeData, visualData, interactiveData, claudeOverrides
   );
 
+  const merged = buildMergedResult(axeData.url, dateStr, axeData, visualData, interactiveData, claudeOverrides);
+  populateBaselineSheet(baselineSheet, [{ label: "結果", merged }], dateStr);
+
   await workbook.xlsx.writeFile(outputPath);
 
   console.log(`Excel チェックシートを生成しました: ${outputPath}`);
   console.log(`  - ${WCAG_CRITERIA.length} 項目`);
+  console.log(`  - シート: 基本17項目 + チェックシート`);
   console.log(`  - 確認OK: ${summary.passCount} / 修正あり: ${summary.failCount} / 未確認: ${summary.unknownCount}`);
 }
 
@@ -1520,6 +1706,10 @@ function main(): void {
   if (args.manifestPath) {
     // マルチURL モード
     const manifest = loadJson<Manifest>(args.manifestPath);
+    if (!Array.isArray(manifest.entries) || manifest.entries.length === 0) {
+      console.error("Error: manifest の entries が空です。1 件以上のエントリを指定してください。");
+      process.exit(1);
+    }
     // manifest.json 内の相対パスを manifest.json の場所基準で解決する
     const manifestDir = dirname(resolve(args.manifestPath));
     for (const entry of manifest.entries) {
