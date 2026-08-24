@@ -137,6 +137,7 @@
   // This array is populated by the skill when generating index.html.
   // Each entry: { label: "display name", file: "relative path to .md" }
   const pages = [
+
     { label: "概要・サマリー", file: "./markdown/_index.md" },
     { label: "ok-TOP", file: "./markdown/ok-TOP.md" },
     { label: "ok-TOP（基本17項目）", file: "./markdown/ok-TOP-baseline-17.md" },
@@ -150,13 +151,23 @@
     { label: "ng-施設案内（基本17項目）", file: "./markdown/ng-施設案内-baseline-17.md" },
     { label: "ng-お問い合わせ", file: "./markdown/ng-お問い合わせ.md" },
     { label: "ng-お問い合わせ（基本17項目）", file: "./markdown/ng-お問い合わせ-baseline-17.md" },
-  ];
+    ];
 
   const nav = document.getElementById('nav');
   const content = document.getElementById('content');
 
+  // Map from each page's resolved absolute path to its index, used to route
+  // relative .md links found *inside* rendered Markdown (e.g. "./TOP.md")
+  // back to loadPage() instead of letting the browser navigate to a URL
+  // resolved against index.html's own location (which is the wrong base and
+  // 404s, since the .md files actually live under markdown/).
+  const pageByPath = new Map();
+  let currentDir = '';
+
   // Build sidebar
   pages.forEach((page, i) => {
+    pageByPath.set(new URL(page.file, location.href).pathname, i);
+
     const a = document.createElement('a');
     a.href = '#';
     a.textContent = page.label;
@@ -171,12 +182,36 @@
     nav.appendChild(a);
   });
 
+  // Intercept clicks on relative .md links inside the rendered content and
+  // route them to loadPage() when they match a known page. External links,
+  // anchors, and links to files outside the sidebar navigate normally.
+  content.addEventListener('click', (e) => {
+    const a = e.target.closest('a');
+    if (!a) return;
+    const href = a.getAttribute('href');
+    if (!href || /^([a-z][a-z0-9+.-]*:|#)/i.test(href)) return;
+
+    let resolvedPath;
+    try {
+      resolvedPath = new URL(href, new URL(currentDir, location.href)).pathname;
+    } catch (err) {
+      return;
+    }
+
+    const targetIndex = pageByPath.get(resolvedPath);
+    if (targetIndex !== undefined) {
+      e.preventDefault();
+      loadPage(targetIndex);
+    }
+  });
+
   async function loadPage(index) {
     // Update active state
     nav.querySelectorAll('a').forEach(a => a.classList.remove('active'));
     nav.querySelector(`a[data-index="${index}"]`).classList.add('active');
 
     const page = pages[index];
+    currentDir = page.file.replace(/[^/]*$/, '');
     try {
       const res = await fetch(page.file);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
